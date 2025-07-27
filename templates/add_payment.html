@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Record Payment - {{ tenant.name }}{% endblock %}
+
+{% block navbar %}
+<div class="ms-auto">
+    <a href="/admin" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Tenant Info Card -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-user-circle text-primary me-3" style="font-size: 2.5rem;"></i>
+                    <div>
+                        <h5 class="mb-0 fw-bold">{{ tenant.name }}</h5>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-home me-1"></i>{{ tenant.house_number }} • 
+                            <i class="fas fa-money-bill me-1"></i>KSh {{ "%.2f"|format(tenant.monthly_rent) }}/month
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payment Form -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-plus-circle text-success me-2"></i>Record New Payment
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="amount" class="form-label fw-semibold">
+                                <i class="fas fa-money-bill me-1"></i>Payment Amount (KSh) *
+                            </label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text">KSh</span>
+                                <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0" placeholder="0.00" required>
+                            </div>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>Monthly rent: KSh {{ "%.2f"|format(tenant.monthly_rent) }}
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="payment_date" class="form-label fw-semibold">
+                                <i class="fas fa-calendar me-1"></i>Payment Date *
+                            </label>
+                            <input type="date" class="form-control form-control-lg" id="payment_date" name="payment_date" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-credit-card me-1"></i>Payment Method *
+                        </label>
+                        <div class="row g-2">
+                            <div class="col-6 col-md-3">
+                                <input type="radio" class="btn-check" name="payment_mode" id="cash" value="Cash" checked>
+                                <label class="btn btn-outline-primary w-100" for="cash">
+                                    <i class="fas fa-money-bill d-block mb-1"></i>
+                                    <small>Cash</small>
+                                </label>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <input type="radio" class="btn-check" name="payment_mode" id="mpesa" value="M-Pesa">
+                                <label class="btn btn-outline-success w-100" for="mpesa">
+                                    <i class="fas fa-mobile-alt d-block mb-1"></i>
+                                    <small>M-Pesa</small>
+                                </label>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <input type="radio" class="btn-check" name="payment_mode" id="bank" value="Bank Transfer">
+                                <label class="btn btn-outline-info w-100" for="bank">
+                                    <i class="fas fa-university d-block mb-1"></i>
+                                    <small>Bank Transfer</small>
+                                </label>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <input type="radio" class="btn-check" name="payment_mode" id="cheque" value="Cheque">
+                                <label class="btn btn-outline-warning w-100" for="cheque">
+                                    <i class="fas fa-file-invoice d-block mb-1"></i>
+                                    <small>Cheque</small>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="/admin" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                        <div>
+                            <button type="button" class="btn btn-warning btn-lg me-2" onclick="initiateM-PesaPayment()">
+                                <i class="fas fa-mobile-alt me-2"></i>M-Pesa Payment
+                            </button>
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-save me-2"></i>Record Payment
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="fas fa-bolt text-warning me-1"></i>Quick Actions
+                </h6>
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="setAmount({{ tenant.monthly_rent }})">
+                            <i class="fas fa-calendar-check me-1"></i>Full Month
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="setAmount({{ tenant.monthly_rent / 2 }})">
+                            <i class="fas fa-calendar-minus me-1"></i>Half Month
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-outline-info btn-sm w-100" onclick="setToday()">
+                            <i class="fas fa-calendar-day me-1"></i>Today's Date
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Set today's date as default
+document.getElementById('payment_date').value = new Date().toISOString().split('T')[0];
+
+// Quick action functions
+function setAmount(amount) {
+    document.getElementById('amount').value = amount.toFixed(2);
+}
+
+function setToday() {
+    document.getElementById('payment_date').value = new Date().toISOString().split('T')[0];
+}
+
+// M-Pesa Payment Integration
+function initiateM-PesaPayment() {
+    const amount = document.getElementById('amount').value;
+    const phone = '{{ tenant.phone }}';
+    
+    if (!amount || amount <= 0) {
+        alert('Please enter a valid payment amount');
+        return;
+    }
+    
+    if (confirm(`Initiate M-Pesa payment of KSh ${amount} to ${phone}?`)) {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        
+        fetch('/mpesa/pay/{{ tenant.id }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                amount: parseFloat(amount),
+                phone: phone
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Payment request sent! Check your phone for M-Pesa prompt.');
+                // Poll for payment status
+                checkPaymentStatus(data.checkout_request_id);
+            } else {
+                alert('Payment failed: ' + data.message);
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>M-Pesa Payment';
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>M-Pesa Payment';
+        });
+    }
+}
+
+function checkPaymentStatus(checkoutRequestId) {
+    const interval = setInterval(() => {
+        fetch(`/mpesa/status/${checkoutRequestId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.status === 'COMPLETED') {
+                    clearInterval(interval);
+                    alert('Payment successful! Redirecting to dashboard...');
+                    window.location.href = '/admin';
+                } else if (data.status === 'FAILED') {
+                    clearInterval(interval);
+                    alert('Payment failed. Please try again.');
+                    const btn = document.querySelector('button[onclick="initiateM-PesaPayment()"]');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>M-Pesa Payment';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Status check error:', error);
+        });
+    }, 3000); // Check every 3 seconds
+    
+    // Stop checking after 2 minutes
+    setTimeout(() => {
+        clearInterval(interval);
+        const btn = document.querySelector('button[onclick="initiateM-PesaPayment()"]');
+        if (btn.disabled) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>M-Pesa Payment';
+            alert('Payment timeout. Please check manually or try again.');
+        }
+    }, 120000);
+}
+</script>
+{% endblock %}

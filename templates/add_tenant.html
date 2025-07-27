@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Tenant - RentSync{% endblock %}
+
+{% block navbar %}
+<div class="ms-auto">
+    <a href="/admin" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-user-plus text-success me-2"></i>Add New Tenant
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label fw-semibold">
+                                <i class="fas fa-user me-1"></i>Full Name *
+                            </label>
+                            <input type="text" class="form-control" id="name" name="name" placeholder="Enter tenant's full name" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="house_number" class="form-label fw-semibold">
+                                <i class="fas fa-home me-1"></i>House/Unit Number *
+                            </label>
+                            <input type="text" class="form-control" id="house_number" name="house_number" placeholder="e.g., A1, B2, House 5" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label fw-semibold">
+                                <i class="fas fa-phone me-1"></i>Phone Number *
+                            </label>
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="e.g., +254712345678" required>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label fw-semibold">
+                                <i class="fas fa-envelope me-1"></i>Email Address
+                            </label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="tenant@example.com (optional)">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label for="monthly_rent" class="form-label fw-semibold">
+                                <i class="fas fa-money-bill me-1"></i>Monthly Rent (KSh) *
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">KSh</span>
+                                <input type="number" class="form-control" id="monthly_rent" name="monthly_rent" step="0.01" min="0" placeholder="0.00" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="/admin" class="btn btn-secondary">
+                            <i class="fas fa-times me-1"></i>Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-user-plus me-2"></i>Add Tenant
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Info Card -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="fas fa-info-circle text-info me-1"></i>Important Notes
+                </h6>
+                <ul class="mb-0 text-muted">
+                    <li>All fields marked with * are required</li>
+                    <li>Monthly rent will be used to calculate balance automatically</li>
+                    <li>Tenant will receive an ID number after creation for dashboard access</li>
+                    <li>Phone number should include country code for SMS notifications</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
