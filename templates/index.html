@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}RentSync - Professional Tenant Management{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <!-- Hero Section -->
+        <div class="text-center mb-5">
+            <div class="mb-4">
+                <i class="fas fa-building text-primary" style="font-size: 4rem;"></i>
+            </div>
+            <h1 class="display-4 fw-bold text-dark mb-3">Welcome to RentSync</h1>
+            <p class="lead text-muted mb-4">Professional Tenant Management System</p>
+            <p class="text-secondary">Streamline rent collection, track payments, and manage tenant relationships with ease</p>
+        </div>
+        
+        <!-- Access Cards -->
+        <div class="row g-4">
+            <!-- Tenant Access -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-user-circle text-primary" style="font-size: 3rem;"></i>
+                        </div>
+                        <h4 class="card-title fw-semibold mb-3">Tenant Portal</h4>
+                        <p class="card-text text-muted mb-4">View your payment history, check balance, and access your rental information</p>
+                        
+                        <form id="tenantForm" class="mb-3">
+                            <div class="input-group mb-3">
+                                <span class="input-group-text"><i class="fas fa-id-card"></i></span>
+                                <input type="number" class="form-control" name="id" placeholder="Enter your Tenant ID" min="1" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-sign-in-alt me-2"></i>Access Dashboard
+                            </button>
+                        </form>
+                        
+                        <small class="text-muted">Don't know your ID? Contact your landlord</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Admin Access -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="fas fa-user-shield text-success" style="font-size: 3rem;"></i>
+                        </div>
+                        <h4 class="card-title fw-semibold mb-3">Admin Portal</h4>
+                        <p class="card-text text-muted mb-4">Manage tenants, record payments, generate reports, and oversee all rental operations</p>
+                        
+                        <a href="/admin/login" class="btn btn-success btn-lg w-100 mb-3">
+                            <i class="fas fa-cog me-2"></i>Admin Login
+                        </a>
+                        
+                        <small class="text-muted">Secure access for property managers</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Features Section -->
+        <div class="row mt-5">
+            <div class="col-12">
+                <h3 class="text-center mb-4 fw-semibold">Key Features</h3>
+                <div class="row g-3">
+                    <div class="col-md-4 text-center">
+                        <i class="fas fa-chart-line text-primary mb-2" style="font-size: 2rem;"></i>
+                        <h6 class="fw-semibold">Real-time Balance Tracking</h6>
+                        <small class="text-muted">Automatic calculation of rent balances</small>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <i class="fas fa-mobile-alt text-success mb-2" style="font-size: 2rem;"></i>
+                        <h6 class="fw-semibold">Multiple Payment Methods</h6>
+                        <small class="text-muted">Cash, M-Pesa, Bank Transfer support</small>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <i class="fas fa-file-invoice text-warning mb-2" style="font-size: 2rem;"></i>
+                        <h6 class="fw-semibold">Payment History</h6>
+                        <small class="text-muted">Complete transaction records</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('tenantForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const id = document.querySelector('input[name="id"]').value;
+    if (id) {
+        window.location.href = '/tenant/' + id;
+    }
+});
+</script>
+{% endblock %}
