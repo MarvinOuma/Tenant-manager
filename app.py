@@ -1,12 +1,18 @@
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, make_response
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 import sqlite3
 from datetime import datetime, date
 import os
 from mpesa import MPesaAPI
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from io import BytesIO
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-change-this'
+app.config['MAX_CONTENT_LENGTH'] = 5 * 1024 * 1024  # 5MB max file size
+app.config['UPLOAD_FOLDER'] = 'static/profile_pictures'
 
 DATABASE = 'rentsync.db'
 
@@ -22,8 +28,12 @@ def init_db():
         phone TEXT NOT NULL,
         email TEXT,
         monthly_rent REAL NOT NULL,
+        profile_picture TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )''')
+    
+    # Create profile pictures directory
+    os.makedirs('static/profile_pictures', exist_ok=True)
     
     # Payments table
     c.execute('''CREATE TABLE IF NOT EXISTS payments (
@@ -33,6 +43,8 @@ def init_db():
         payment_date DATE NOT NULL,
         payment_mode TEXT DEFAULT 'Cash',
         status TEXT DEFAULT 'Paid',
+        mpesa_code TEXT,
+        receipt_file TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (tenant_id) REFERENCES tenants (id)
     )''')
@@ -107,8 +119,57 @@ def calculate_balance(tenant_id):
 def index():
     return render_template('index.html')
 
+@app.route('/tenant/login', methods=['GET', 'POST'])
+def tenant_login():
+    if request.method == 'POST':
+        phone = request.form['phone']
+        house_number = request.form['house_number']
+        
+        conn = get_db()
+        tenant = conn.execute(
+            'SELECT * FROM tenants WHERE phone = ? AND house_number = ?', 
+            (phone, house_number)
+        ).fetchone()
+        conn.close()
+        
+        if tenant:
+            session['tenant_id'] = tenant['id']
+            return redirect(url_for('tenant_dashboard'))
+        else:
+            flash('Invalid phone number or house number')
+    
+    return render_template('tenant_login.html')
+
+@app.route('/tenant/dashboard')
+def tenant_dashboard():
+    if 'tenant_id' not in session:
+        return redirect(url_for('tenant_login'))
+    
+    tenant_id = session['tenant_id']
+    conn = get_db()
+    tenant = conn.execute('SELECT * FROM tenants WHERE id = ?', (tenant_id,)).fetchone()
+    if not tenant:
+        session.pop('tenant_id', None)
+        flash('Tenant not found')
+        return redirect(url_for('tenant_login'))
+    
+    payments = conn.execute(
+        'SELECT * FROM payments WHERE tenant_id = ? ORDER BY payment_date DESC', 
+        (tenant_id,)
+    ).fetchall()
+    
+    balance = calculate_balance(tenant_id)
+    conn.close()
+    
+    return render_template('tenant_dashboard.html', tenant=tenant, payments=payments, balance=balance)
+
+@app.route('/tenant/logout')
+def tenant_logout():
+    session.pop('tenant_id', None)
+    return redirect(url_for('index'))
+
 @app.route('/tenant/<int:tenant_id>')
-def tenant_dashboard(tenant_id):
+def tenant_dashboard_legacy(tenant_id):
     conn = get_db()
     tenant = conn.execute('SELECT * FROM tenants WHERE id = ?', (tenant_id,)).fetchone()
     if not tenant:
@@ -327,6 +388,238 @@ def check_mpesa_status(checkout_request_id):
         })
     
     return jsonify({'success': False, 'message': 'Transaction not found'})
+
+@app.route('/tenant/pay', methods=['GET', 'POST'])
+def tenant_payment():
+    if 'tenant_id' not in session:
+        return redirect(url_for('tenant_login'))
+    
+    tenant_id = session['tenant_id']
+    conn = get_db()
+    tenant = conn.execute('SELECT * FROM tenants WHERE id = ?', (tenant_id,)).fetchone()
+    if not tenant:
+        flash('Tenant not found')
+        return redirect(url_for('index'))
+    
+    balance = calculate_balance(tenant_id)
+    
+    if request.method == 'POST':
+        payment_type = request.form.get('payment_type')
+        amount = float(request.form['amount'])
+        
+        if payment_type == 'mpesa':
+            # M-Pesa STK Push
+            mpesa = MPesaAPI()
+            phone = request.form.get('mpesa_phone', tenant['phone'])
+            
+            if phone.startswith('+'):
+                phone = phone[1:]
+            if phone.startswith('0'):
+                phone = '254' + phone[1:]
+            
+            result = mpesa.stk_push(
+                phone_number=phone,
+                amount=amount,
+                account_reference=f'RENT-{tenant["house_number"]}',
+                transaction_desc=f'Rent payment for {tenant["name"]}'
+            )
+            
+            if result.get('ResponseCode') == '0':
+                conn.execute(
+                    'INSERT INTO mpesa_transactions (tenant_id, checkout_request_id, merchant_request_id, amount, phone_number) VALUES (?, ?, ?, ?, ?)',
+                    (tenant_id, result['CheckoutRequestID'], result['MerchantRequestID'], amount, phone)
+                )
+                conn.commit()
+                conn.close()
+                
+                return render_template('payment_processing.html', 
+                                     tenant=tenant, 
+                                     checkout_request_id=result['CheckoutRequestID'],
+                                     amount=amount,
+                                     mpesa_phone=phone)
+            else:
+                flash(f'Payment failed: {result.get("errorMessage", "Unknown error")}')
+        
+        elif payment_type == 'manual':
+            # Manual payment entry
+            mpesa_code = request.form.get('mpesa_code', '')
+            receipt_file = request.files.get('receipt')
+            
+            receipt_filename = None
+            if receipt_file and receipt_file.filename:
+                receipt_filename = secure_filename(receipt_file.filename)
+                receipt_file.save(os.path.join('uploads', receipt_filename))
+            
+            conn.execute(
+                'INSERT INTO payments (tenant_id, amount, payment_date, payment_mode, status, mpesa_code, receipt_file) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                (tenant_id, amount, date.today(), 'Manual Entry', 'Pending Verification', mpesa_code, receipt_filename)
+            )
+            conn.commit()
+            flash('Payment submitted for verification')
+    
+    conn.close()
+    return render_template('tenant_payment.html', tenant=tenant, balance=balance)
+
+@app.route('/tenant/receipt/<int:payment_id>')
+def download_receipt(payment_id):
+    if 'tenant_id' not in session:
+        return redirect(url_for('tenant_login'))
+    
+    tenant_id = session['tenant_id']
+    conn = get_db()
+    tenant = conn.execute('SELECT * FROM tenants WHERE id = ?', (tenant_id,)).fetchone()
+    payment = conn.execute('SELECT * FROM payments WHERE id = ? AND tenant_id = ?', (payment_id, tenant_id)).fetchone()
+    
+    if not tenant or not payment:
+        flash('Receipt not found')
+        return redirect(url_for('tenant_dashboard'))
+    
+    # Generate PDF receipt
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    
+    # Header
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(50, 750, "RentSync - Payment Receipt")
+    
+    # Tenant details
+    p.setFont("Helvetica", 12)
+    p.drawString(50, 700, f"Tenant: {tenant['name']}")
+    p.drawString(50, 680, f"House/Unit: {tenant['house_number']}")
+    p.drawString(50, 660, f"Phone: {tenant['phone']}")
+    
+    # Payment details
+    p.drawString(50, 620, f"Payment Date: {payment['payment_date']}")
+    p.drawString(50, 600, f"Amount: KSh {payment['amount']:.2f}")
+    p.drawString(50, 580, f"Payment Mode: {payment['payment_mode']}")
+    p.drawString(50, 560, f"Status: {payment['status']}")
+    
+    if payment.get('mpesa_code'):
+        p.drawString(50, 540, f"M-Pesa Code: {payment['mpesa_code']}")
+    
+    # Footer
+    p.drawString(50, 100, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    p.drawString(50, 80, "Thank you for your payment!")
+    
+    p.save()
+    buffer.seek(0)
+    
+    response = make_response(buffer.getvalue())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename=receipt_{payment_id}.pdf'
+    
+    conn.close()
+    return response
+
+@app.route('/tenant/statement')
+def download_statement():
+    if 'tenant_id' not in session:
+        return redirect(url_for('tenant_login'))
+    
+    tenant_id = session['tenant_id']
+    conn = get_db()
+    tenant = conn.execute('SELECT * FROM tenants WHERE id = ?', (tenant_id,)).fetchone()
+    payments = conn.execute(
+        'SELECT * FROM payments WHERE tenant_id = ? ORDER BY payment_date DESC', 
+        (tenant_id,)
+    ).fetchall()
+    
+    if not tenant:
+        flash('Tenant not found')
+        return redirect(url_for('index'))
+    
+    balance = calculate_balance(tenant_id)
+    
+    # Generate PDF statement
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=letter)
+    
+    # Header
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(50, 750, "RentSync - Payment Statement")
+    
+    # Tenant details
+    p.setFont("Helvetica", 12)
+    p.drawString(50, 700, f"Tenant: {tenant['name']}")
+    p.drawString(50, 680, f"House/Unit: {tenant['house_number']}")
+    p.drawString(50, 660, f"Monthly Rent: KSh {tenant['monthly_rent']:.2f}")
+    p.drawString(50, 640, f"Current Balance: KSh {balance:.2f}")
+    
+    # Payment history
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(50, 600, "Payment History:")
+    
+    y_position = 580
+    p.setFont("Helvetica", 10)
+    
+    for payment in payments:
+        if y_position < 100:
+            p.showPage()
+            y_position = 750
+        
+        p.drawString(50, y_position, f"{payment['payment_date']} - KSh {payment['amount']:.2f} ({payment['payment_mode']})")
+        y_position -= 20
+    
+    # Footer
+    p.drawString(50, 50, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    p.save()
+    buffer.seek(0)
+    
+    response = make_response(buffer.getvalue())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename=statement_{tenant_id}.pdf'
+    
+    conn.close()
+    return response
+
+@app.route('/tenant/profile', methods=['GET', 'POST'])
+def tenant_profile():
+    if 'tenant_id' not in session:
+        return redirect(url_for('tenant_login'))
+    
+    tenant_id = session['tenant_id']
+    conn = get_db()
+    
+    if request.method == 'POST':
+        profile_picture = request.files.get('profile_picture')
+        
+        if profile_picture and profile_picture.filename:
+            try:
+                # Ensure directory exists
+                upload_dir = os.path.join(os.getcwd(), 'static', 'profile_pictures')
+                os.makedirs(upload_dir, exist_ok=True)
+                print(f"Upload directory: {upload_dir}")
+                
+                # Generate simple filename
+                file_ext = profile_picture.filename.rsplit('.', 1)[1].lower() if '.' in profile_picture.filename else 'jpg'
+                filename = f"tenant_{tenant_id}.{file_ext}"
+                filepath = os.path.join(upload_dir, filename)
+                print(f"Saving to: {filepath}")
+                
+                # Save file
+                profile_picture.save(filepath)
+                print(f"File saved successfully: {filename}")
+                print(f"Database updated for tenant {tenant_id}")
+                
+                # Update database
+                conn.execute('UPDATE tenants SET profile_picture = ? WHERE id = ?', (filename, tenant_id))
+                conn.commit()
+                flash('✅ Profile picture updated successfully!')
+                
+            except Exception as e:
+                print(f"Upload error: {str(e)}")
+                flash(f'Upload failed: {str(e)}')
+        else:
+            flash('Please select a file to upload.')
+        
+        conn.close()
+        return redirect(url_for('tenant_profile'))
+    
+    tenant = conn.execute('SELECT * FROM tenants WHERE id = ?', (tenant_id,)).fetchone()
+    conn.close()
+    
+    return render_template('tenant_profile.html', tenant=tenant)
 
 if __name__ == '__main__':
     init_db()
