@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Tenant Dashboard - {{ tenant.name }}{% endblock %}
+
+{% block navbar %}
+<div class="ms-auto">
+    <a href="/" class="btn btn-outline-primary">
+        <i class="fas fa-home me-1"></i>Home
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex align-items-center mb-4">
+            <i class="fas fa-user-circle text-primary me-3" style="font-size: 2.5rem;"></i>
+            <div>
+                <h2 class="mb-0 fw-bold">{{ tenant.name }}</h2>
+                <p class="text-muted mb-0">Tenant Dashboard</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Personal Details Card -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-id-card text-primary me-2"></i>Personal Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="text-muted small">Full Name</label>
+                    <p class="fw-semibold mb-0">{{ tenant.name }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small">House/Unit</label>
+                    <p class="fw-semibold mb-0">{{ tenant.house_number }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="text-muted small">Phone Number</label>
+                    <p class="fw-semibold mb-0">{{ tenant.phone }}</p>
+                </div>
+                <div class="mb-0">
+                    <label class="text-muted small">Monthly Rent</label>
+                    <p class="fw-semibold mb-0 text-primary">KSh {{ "%.2f"|format(tenant.monthly_rent) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Balance Card -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-wallet text-primary me-2"></i>Rent Balance
+                </h5>
+            </div>
+            <div class="card-body text-center py-5">
+                <div class="mb-3">
+                    {% if balance > 0 %}
+                        <i class="fas fa-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
+                    {% elif balance < 0 %}
+                        <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
+                    {% else %}
+                        <i class="fas fa-balance-scale text-secondary" style="font-size: 3rem;"></i>
+                    {% endif %}
+                </div>
+                
+                <h1 class="display-4 fw-bold mb-2">
+                    {% if balance > 0 %}
+                        <span class="balance-positive">KSh {{ "%.2f"|format(balance) }}</span>
+                    {% elif balance < 0 %}
+                        <span class="balance-negative">KSh {{ "%.2f"|format(-balance) }}</span>
+                    {% else %}
+                        <span class="balance-zero">KSh 0.00</span>
+                    {% endif %}
+                </h1>
+                
+                <span class="status-badge {% if balance > 0 %}status-overdue{% elif balance < 0 %}status-credit{% else %}status-paid{% endif %}">
+                    {% if balance > 0 %}
+                        <i class="fas fa-clock me-1"></i>Overdue Payment
+                    {% elif balance < 0 %}
+                        <i class="fas fa-plus-circle me-1"></i>Credit Balance
+                    {% else %}
+                        <i class="fas fa-check me-1"></i>Fully Paid
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment History -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history text-primary me-2"></i>Payment History
+                </h5>
+                <span class="badge bg-primary">{{ payments|length }} payments</span>
+            </div>
+            <div class="card-body p-0">
+                {% if payments %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-calendar me-1"></i>Date</th>
+                                <th><i class="fas fa-money-bill me-1"></i>Amount</th>
+                                <th><i class="fas fa-credit-card me-1"></i>Payment Mode</th>
+                                <th><i class="fas fa-check-circle me-1"></i>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payment in payments %}
+                            <tr>
+                                <td class="fw-medium">{{ payment.payment_date }}</td>
+                                <td class="text-success fw-semibold">KSh {{ "%.2f"|format(payment.amount) }}</td>
+                                <td>
+                                    <span class="badge bg-light text-dark">
+                                        {% if payment.payment_mode == 'M-Pesa' %}
+                                            <i class="fas fa-mobile-alt me-1"></i>
+                                        {% elif payment.payment_mode == 'Cash' %}
+                                            <i class="fas fa-money-bill me-1"></i>
+                                        {% elif payment.payment_mode == 'Bank Transfer' %}
+                                            <i class="fas fa-university me-1"></i>
+                                        {% else %}
+                                            <i class="fas fa-file-invoice me-1"></i>
+                                        {% endif %}
+                                        {{ payment.payment_mode }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check me-1"></i>{{ payment.status }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-receipt text-muted" style="font-size: 3rem;"></i>
+                    <h5 class="text-muted mt-3">No Payment History</h5>
+                    <p class="text-muted">Your payment records will appear here once you make your first payment.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
