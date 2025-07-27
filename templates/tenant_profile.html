@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - {{ tenant.name }}{% endblock %}
+
+{% block navbar %}
+<div class="ms-auto">
+    <a href="/tenant/dashboard" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-light">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-user-edit text-primary me-2"></i>My Profile
+                </h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="row">
+                    <!-- Profile Picture Section -->
+                    <div class="col-md-4 text-center">
+                        <div class="mb-3">
+                            {% if tenant.profile_picture %}
+                                <img src="/static/profile_pictures/{{ tenant.profile_picture }}" 
+                                     class="rounded-circle border" 
+                                     style="width: 150px; height: 150px; object-fit: cover;" 
+                                     alt="Profile Picture">
+                            {% else %}
+                                <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center" 
+                                     style="width: 150px; height: 150px; margin: 0 auto;">
+                                    <i class="fas fa-user text-muted" style="font-size: 4rem;"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <form method="POST" enctype="multipart/form-data" class="mb-3">
+                            <div class="mb-3">
+                                <input type="file" class="form-control" name="profile_picture" 
+                                       accept="image/*">
+                                <small class="text-muted">JPG, PNG, JPEG, GIF only</small>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="uploadBtn">
+                                <i class="fas fa-upload me-1"></i>Update Picture
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Profile Details -->
+                    <div class="col-md-8">
+                        <h5 class="fw-bold mb-3">Personal Information</h5>
+                        
+                        <div class="row">
+                            <div class="col-sm-6 mb-3">
+                                <label class="text-muted small">Full Name</label>
+                                <p class="fw-semibold mb-0">{{ tenant.name }}</p>
+                            </div>
+                            
+                            <div class="col-sm-6 mb-3">
+                                <label class="text-muted small">House/Unit Number</label>
+                                <p class="fw-semibold mb-0">{{ tenant.house_number }}</p>
+                            </div>
+                            
+                            <div class="col-sm-6 mb-3">
+                                <label class="text-muted small">Phone Number</label>
+                                <p class="fw-semibold mb-0">{{ tenant.phone }}</p>
+                            </div>
+                            
+                            <div class="col-sm-6 mb-3">
+                                <label class="text-muted small">Email Address</label>
+                                <p class="fw-semibold mb-0">{{ tenant.email or 'Not provided' }}</p>
+                            </div>
+                            
+                            <div class="col-sm-6 mb-3">
+                                <label class="text-muted small">Monthly Rent</label>
+                                <p class="fw-semibold mb-0 text-primary">KSh {{ "%.2f"|format(tenant.monthly_rent) }}</p>
+                            </div>
+                            
+                            <div class="col-sm-6 mb-3">
+                                <label class="text-muted small">Tenant Since</label>
+                                <p class="fw-semibold mb-0">{{ tenant.created_at[:10] }}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-1"></i>
+                            <small>To update your personal information, please contact your landlord.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="fas fa-bolt text-warning me-1"></i>Quick Actions
+                </h6>
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <a href="/tenant/pay" class="btn btn-success w-100">
+                            <i class="fas fa-credit-card me-1"></i>Make Payment
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/tenant/statement" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-download me-1"></i>Download Statement
+                        </a>
+                    </div>
+                    <div class="col-md-4">
+                        <a href="/tenant/logout" class="btn btn-outline-danger w-100">
+                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Simple image preview
+document.querySelector('input[name="profile_picture"]').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const container = document.querySelector('.col-md-4 .mb-3');
+            container.innerHTML = `<img src="${e.target.result}" class="rounded-circle border" style="width: 150px; height: 150px; object-fit: cover;" alt="Preview">`;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Show loading on submit
+document.querySelector('form').addEventListener('submit', function() {
+    const btn = document.getElementById('uploadBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Uploading...';
+});
+</script>
+{% endblock %}
