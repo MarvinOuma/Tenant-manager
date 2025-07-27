@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Help & Support - {{ tenant.name }}{% endblock %}
+
+{% block navbar %}
+<div class="ms-auto">
+    <a href="/tenant/dashboard" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Submit Help Request -->
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-question-circle me-2"></i>Request Help
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Category</label>
+                            <select class="form-select" name="category" required>
+                                <option value="">Select category...</option>
+                                <option value="Maintenance">Maintenance</option>
+                                <option value="Utilities">Utilities (Water, Electricity)</option>
+                                <option value="Payment">Payment Issues</option>
+                                <option value="Security">Security Concerns</option>
+                                <option value="Noise">Noise Complaints</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Subject</label>
+                            <input type="text" class="form-control" name="subject" placeholder="Brief description" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Message</label>
+                        <textarea class="form-control" name="message" rows="4" placeholder="Describe your issue in detail..." required></textarea>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-paper-plane me-1"></i>Submit Request
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Quick Help -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-lightbulb text-warning me-1"></i>Common Issues
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Maintenance:</strong>
+                    <small class="text-muted d-block">Broken bulbs, plumbing, repairs</small>
+                </div>
+                <div class="mb-3">
+                    <strong>Utilities:</strong>
+                    <small class="text-muted d-block">Water bills, electricity issues</small>
+                </div>
+                <div class="mb-3">
+                    <strong>Payment:</strong>
+                    <small class="text-muted d-block">M-Pesa issues, receipt problems</small>
+                </div>
+                <div class="mb-0">
+                    <strong>Security:</strong>
+                    <small class="text-muted d-block">Gate access, safety concerns</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- My Help Requests -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history text-primary me-2"></i>My Help Requests
+                </h5>
+                <span class="badge bg-primary">{{ help_requests|length }} requests</span>
+            </div>
+            
+            {% if help_requests %}
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Subject</th>
+                                <th>Status</th>
+                                <th>Response</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in help_requests %}
+                            <tr>
+                                <td class="fw-medium">{{ request.created_at[:10] }}</td>
+                                <td>
+                                    <span class="badge bg-light text-dark">
+                                        {% if request.category == 'Maintenance' %}
+                                            <i class="fas fa-tools me-1"></i>
+                                        {% elif request.category == 'Utilities' %}
+                                            <i class="fas fa-bolt me-1"></i>
+                                        {% elif request.category == 'Payment' %}
+                                            <i class="fas fa-credit-card me-1"></i>
+                                        {% elif request.category == 'Security' %}
+                                            <i class="fas fa-shield-alt me-1"></i>
+                                        {% else %}
+                                            <i class="fas fa-question me-1"></i>
+                                        {% endif %}
+                                        {{ request.category }}
+                                    </span>
+                                </td>
+                                <td>{{ request.subject }}</td>
+                                <td>
+                                    <span class="badge {% if request.status == 'Open' %}bg-warning{% elif request.status == 'In Progress' %}bg-info{% elif request.status == 'Resolved' %}bg-success{% else %}bg-secondary{% endif %}">
+                                        {{ request.status }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if request.admin_response %}
+                                        <button class="btn btn-sm btn-outline-info" onclick="showResponse('{{ request.admin_response|e }}')">
+                                            <i class="fas fa-eye me-1"></i>View
+                                        </button>
+                                    {% else %}
+                                        <small class="text-muted">Pending</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% else %}
+            <div class="card-body text-center py-5">
+                <i class="fas fa-question-circle text-muted" style="font-size: 3rem;"></i>
+                <h5 class="text-muted mt-3">No Help Requests</h5>
+                <p class="text-muted">Submit your first help request above</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function showResponse(response) {
+    alert('Admin Response:\n\n' + response);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Account Management - {{ role|title }}{% endblock %}
+
+{% block navbar %}
+<div class="ms-auto">
+    <a href="{% if role == 'caretaker' %}/caretaker{% else %}/admin{% endif %}" class="btn btn-outline-primary me-2">
+        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+    </a>
+    <a href="/logout" class="btn btn-outline-danger">
+        <i class="fas fa-sign-out-alt me-1"></i>Logout
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Account Information -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-user-cog text-primary me-2"></i>Account Information
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="text-muted small">Username</label>
+                            <p class="fw-semibold mb-0">{{ admin.username }}</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="text-muted small">Account Type</label>
+                            <p class="fw-semibold mb-0">
+                                {% if role == 'landlord' %}
+                                    <i class="fas fa-crown text-warning me-1"></i>Landlord
+                                {% else %}
+                                    <i class="fas fa-hard-hat text-info me-1"></i>Caretaker
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="text-muted small">Account Created</label>
+                            <p class="fw-semibold mb-0">{{ admin.created_at[:10] }}</p>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="text-muted small">Access Level</label>
+                            <p class="fw-semibold mb-0">
+                                {% if role == 'landlord' %}
+                                    Full Administrative Access
+                                {% else %}
+                                    Operational Management
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Change Password -->
+        <div class="card mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-key me-2"></i>Change Password
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Current Password</label>
+                        <input type="password" class="form-control" name="current_password" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">New Password</label>
+                        <input type="password" class="form-control" name="new_password" minlength="6" required>
+                        <small class="text-muted">Minimum 6 characters</small>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Confirm New Password</label>
+                        <input type="password" class="form-control" name="confirm_password" minlength="6" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-save me-1"></i>Update Password
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Permissions -->
+        <div class="card">
+            <div class="card-header bg-light">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-shield-alt text-success me-1"></i>Your Permissions
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if role == 'landlord' %}
+                    <div class="col-md-6">
+                        <div class="text-success mb-2"><i class="fas fa-check me-2"></i>View Financial Reports</div>
+                        <div class="text-success mb-2"><i class="fas fa-check me-2"></i>Add/Remove Tenants</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-success mb-2"><i class="fas fa-check me-2"></i>All Help Requests</div>
+                        <div class="text-success mb-2"><i class="fas fa-check me-2"></i>System Administration</div>
+                    </div>
+                    {% else %}
+                    <div class="col-md-6">
+                        <div class="text-success mb-2"><i class="fas fa-check me-2"></i>Tenant Management</div>
+                        <div class="text-success mb-2"><i class="fas fa-check me-2"></i>Payment Processing</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-success mb-2"><i class="fas fa-check me-2"></i>Maintenance Requests</div>
+                        <div class="text-muted mb-2"><i class="fas fa-times me-2"></i>Financial Reports</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

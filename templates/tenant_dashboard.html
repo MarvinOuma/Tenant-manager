@@ -1,190 +1,388 @@
 {% extends "base.html" %}
 
-{% block title %}Tenant Dashboard - {{ tenant.name }}{% endblock %}
+{% block title %}Dashboard - {{ tenant.name }}{% endblock %}
 
 {% block navbar %}
 <div class="ms-auto">
-    <a href="/" class="btn btn-outline-primary">
-        <i class="fas fa-home me-1"></i>Home
+    <a href="/tenant/profile" class="btn btn-outline-light me-2">
+        <i class="fas fa-user me-1"></i>Profile
+    </a>
+    <a href="/tenant/help" class="btn btn-outline-light me-2">
+        <i class="fas fa-question-circle me-1"></i>Help
+    </a>
+    <a href="/logout" class="btn btn-outline-danger">
+        <i class="fas fa-sign-out-alt me-1"></i>Logout
     </a>
 </div>
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="d-flex align-items-center justify-content-between mb-4">
-            <div class="d-flex align-items-center">
-                {% if tenant.profile_picture %}
-                    <img src="/static/profile_pictures/{{ tenant.profile_picture }}" 
-                         class="rounded-circle border me-3" 
-                         style="width: 60px; height: 60px; object-fit: cover;" 
-                         alt="Profile Picture">
-                {% else %}
-                    <i class="fas fa-user-circle text-primary me-3" style="font-size: 2.5rem;"></i>
-                {% endif %}
-                <div>
-                    <h2 class="mb-0 fw-bold">{{ tenant.name }}</h2>
-                    <p class="text-muted mb-0">Tenant Dashboard</p>
+<div class="dashboard-container">
+    <!-- Top Bar -->
+    <div class="top-bar bg-white shadow-sm py-3 mb-4">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        {% if tenant.profile_picture %}
+                            <img src="/static/profile_pictures/{{ tenant.profile_picture }}" 
+                                 class="rounded-circle me-3" 
+                                 style="width: 50px; height: 50px; object-fit: cover;" 
+                                 alt="Profile">
+                        {% else %}
+                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 50px; height: 50px;">
+                                <i class="fas fa-user text-white"></i>
+                            </div>
+                        {% endif %}
+                        <div>
+                            <h4 class="mb-0 fw-bold">{{ tenant.name }}</h4>
+                            <small class="text-muted">Unit {{ tenant.house_number }} • {{ tenant.phone }}</small>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div>
-                <a href="/tenant/profile" class="btn btn-outline-secondary me-2">
-                    <i class="fas fa-user-edit me-1"></i>Profile
-                </a>
-                <a href="/tenant/pay" class="btn btn-success me-2">
-                    <i class="fas fa-credit-card me-1"></i>Make Payment
-                </a>
-                <a href="/tenant/statement" class="btn btn-outline-primary me-2">
-                    <i class="fas fa-download me-1"></i>Download Statement
-                </a>
-                <a href="/tenant/logout" class="btn btn-outline-danger">
-                    <i class="fas fa-sign-out-alt me-1"></i>Logout
-                </a>
+                <div class="col-md-6 text-md-end">
+                    <div class="balance-display d-inline-flex align-items-center bg-light rounded-pill px-4 py-2">
+                        <div class="me-3">
+                            <small class="text-muted d-block">Balance</small>
+                            <span class="fw-bold {% if balance > 0 %}text-danger{% elif balance < 0 %}text-success{% else %}text-secondary{% endif %}">
+                                KSh {{ "%.2f"|format(balance if balance >= 0 else -balance) }}
+                            </span>
+                        </div>
+                        <span class="badge {% if balance > 0 %}bg-danger{% elif balance < 0 %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if balance > 0 %}DUE{% elif balance < 0 %}CREDIT{% else %}PAID{% endif %}
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="row g-4">
-    <!-- Personal Details Card -->
-    <div class="col-lg-4">
-        <div class="card">
-            <div class="card-header bg-light">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-id-card text-primary me-2"></i>Personal Details
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="text-muted small">Full Name</label>
-                    <p class="fw-semibold mb-0">{{ tenant.name }}</p>
-                </div>
-                <div class="mb-3">
-                    <label class="text-muted small">House/Unit</label>
-                    <p class="fw-semibold mb-0">{{ tenant.house_number }}</p>
-                </div>
-                <div class="mb-3">
-                    <label class="text-muted small">Phone Number</label>
-                    <p class="fw-semibold mb-0">{{ tenant.phone }}</p>
-                </div>
-                <div class="mb-0">
-                    <label class="text-muted small">Monthly Rent</label>
-                    <p class="fw-semibold mb-0 text-primary">KSh {{ "%.2f"|format(tenant.monthly_rent) }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Balance Card -->
-    <div class="col-lg-8">
-        <div class="card">
-            <div class="card-header bg-light">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-wallet text-primary me-2"></i>Rent Balance
-                </h5>
-            </div>
-            <div class="card-body text-center py-5">
-                <div class="mb-3">
-                    {% if balance > 0 %}
-                        <i class="fas fa-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
-                    {% elif balance < 0 %}
-                        <i class="fas fa-check-circle text-success" style="font-size: 3rem;"></i>
-                    {% else %}
-                        <i class="fas fa-balance-scale text-secondary" style="font-size: 3rem;"></i>
-                    {% endif %}
-                </div>
-                
-                <h1 class="display-4 fw-bold mb-2">
-                    {% if balance > 0 %}
-                        <span class="balance-positive">KSh {{ "%.2f"|format(balance) }}</span>
-                    {% elif balance < 0 %}
-                        <span class="balance-negative">KSh {{ "%.2f"|format(-balance) }}</span>
-                    {% else %}
-                        <span class="balance-zero">KSh 0.00</span>
-                    {% endif %}
-                </h1>
-                
-                <span class="status-badge {% if balance > 0 %}status-overdue{% elif balance < 0 %}status-credit{% else %}status-paid{% endif %}">
-                    {% if balance > 0 %}
-                        <i class="fas fa-clock me-1"></i>Overdue Payment
-                    {% elif balance < 0 %}
-                        <i class="fas fa-plus-circle me-1"></i>Credit Balance
-                    {% else %}
-                        <i class="fas fa-check me-1"></i>Fully Paid
-                    {% endif %}
-                </span>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Payment History -->
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">
-                    <i class="fas fa-history text-primary me-2"></i>Payment History
-                </h5>
-                <span class="badge bg-primary">{{ payments|length }} payments</span>
-            </div>
-            <div class="card-body p-0">
-                {% if payments %}
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th><i class="fas fa-calendar me-1"></i>Date</th>
-                                <th><i class="fas fa-money-bill me-1"></i>Amount</th>
-                                <th><i class="fas fa-credit-card me-1"></i>Payment Mode</th>
-                                <th><i class="fas fa-check-circle me-1"></i>Status</th>
-                            <th><i class="fas fa-download me-1"></i>Receipt</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for payment in payments %}
-                            <tr>
-                                <td class="fw-medium">{{ payment.payment_date }}</td>
-                                <td class="text-success fw-semibold">KSh {{ "%.2f"|format(payment.amount) }}</td>
-                                <td>
-                                    <span class="badge bg-light text-dark">
-                                        {% if payment.payment_mode == 'M-Pesa' %}
-                                            <i class="fas fa-mobile-alt me-1"></i>
-                                        {% elif payment.payment_mode == 'Cash' %}
-                                            <i class="fas fa-money-bill me-1"></i>
-                                        {% elif payment.payment_mode == 'Bank Transfer' %}
-                                            <i class="fas fa-university me-1"></i>
+    <div class="container-fluid">
+        <!-- Main Grid -->
+        <div class="row g-4">
+            <!-- Left Column -->
+            <div class="col-lg-8">
+                <!-- Payment Status Card -->
+                <div class="status-card mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    {% if next_rent_info %}
+                                    <h5 class="fw-bold mb-2">
+                                        {% if next_rent_info.is_overdue %}
+                                            <i class="fas fa-exclamation-triangle text-danger me-2"></i>Payment Overdue
+                                        {% elif next_rent_info.days_until_due <= 3 %}
+                                            <i class="fas fa-clock text-warning me-2"></i>Payment Due Soon
                                         {% else %}
-                                            <i class="fas fa-file-invoice me-1"></i>
+                                            <i class="fas fa-calendar-check text-success me-2"></i>Next Payment
                                         {% endif %}
+                                    </h5>
+                                    <p class="text-muted mb-3">
+                                        Due: <strong>{{ next_rent_info.next_due_date }}</strong>
+                                        {% if next_rent_info.is_overdue %}
+                                            ({{ next_rent_info.days_until_due|abs }} days overdue)
+                                        {% elif next_rent_info.days_until_due == 0 %}
+                                            (Today!)
+                                        {% else %}
+                                            ({{ next_rent_info.days_until_due }} days remaining)
+                                        {% endif %}
+                                    </p>
+                                    <div class="amount-display">
+                                        <span class="text-muted">Amount needed:</span>
+                                        <span class="fs-4 fw-bold text-primary ms-2">KSh {{ "%.2f"|format(next_rent_info.amount_needed) }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 text-md-end">
+                                    <a href="/tenant/pay" class="btn btn-primary btn-lg px-4">
+                                        <i class="fas fa-credit-card me-2"></i>Pay Now
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                {% if notifications %}
+                <div class="notifications-section mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold mb-0">
+                            <i class="fas fa-bell text-warning me-2"></i>Recent Updates
+                        </h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="markAllRead()">
+                            Mark All Read
+                        </button>
+                    </div>
+                    
+                    <div class="notifications-list">
+                        {% for notification in notifications[:3] %}
+                        <div class="notification-item bg-white rounded-3 p-3 mb-2 shadow-sm border-start border-3 
+                                   {% if notification.type == 'success' %}border-success{% elif notification.type == 'warning' %}border-warning{% elif notification.type == 'danger' %}border-danger{% else %}border-info{% endif %}">
+                            <div class="d-flex">
+                                <i class="fas {% if notification.type == 'success' %}fa-check-circle text-success{% elif notification.type == 'warning' %}fa-exclamation-triangle text-warning{% elif notification.type == 'danger' %}fa-times-circle text-danger{% else %}fa-info-circle text-info{% endif %} me-3 mt-1"></i>
+                                <div class="flex-grow-1">
+                                    <p class="mb-1">{{ notification.message }}</p>
+                                    {% if notification.get('time') %}
+                                    <small class="text-muted">{{ notification.time[:16] }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Utility Bills -->
+                {% if utility_bills %}
+                <div class="utility-bills-section mb-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="fas fa-bolt text-warning me-2"></i>Utility Bills
+                        <span class="badge bg-warning ms-2">{{ utility_bills|selectattr('status', 'equalto', 'Pending')|list|length }} pending</span>
+                    </h5>
+                    
+                    <div class="bills-grid">
+                        {% for bill in utility_bills %}
+                        <div class="bill-card bg-white rounded-3 p-3 shadow-sm border {% if bill.status == 'Paid' %}border-success{% else %}border-warning{% endif %}">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="bill-type fw-semibold">
+                                        {% if bill.bill_type == 'Electricity' %}⚡{% elif bill.bill_type == 'Water' %}💧{% elif bill.bill_type == 'Gas' %}🔥{% elif bill.bill_type == 'Internet' %}🌐{% elif bill.bill_type == 'Garbage' %}🗑️{% elif bill.bill_type == 'Security' %}🛡️{% else %}📋{% endif %}
+                                        {{ bill.bill_type }}
+                                    </div>
+                                    <div class="bill-amount text-muted">KSh {{ "%.2f"|format(bill.amount) }}</div>
+                                    <small class="text-muted">Due: {{ bill.due_date }}</small>
+                                </div>
+                                <span class="badge {% if bill.status == 'Paid' %}bg-success{% else %}bg-warning{% endif %}">
+                                    {{ bill.status }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Payment History -->
+                <div class="payment-history">
+                    <h5 class="fw-bold mb-3">
+                        <i class="fas fa-history text-info me-2"></i>Payment History
+                    </h5>
+                    
+                    {% if payments %}
+                    <div class="payments-list">
+                        {% for payment in payments[:5] %}
+                        <div class="payment-item bg-white rounded-3 p-3 mb-2 shadow-sm">
+                            <div class="row align-items-center">
+                                <div class="col-md-3">
+                                    <div class="payment-date fw-semibold">{{ payment.payment_date }}</div>
+                                    <small class="text-muted">{{ payment.created_at[:10] if payment.created_at else '' }}</small>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="payment-amount fw-bold text-success">KSh {{ "%.2f"|format(payment.amount) }}</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <span class="badge {% if payment.payment_mode == 'M-Pesa' %}bg-success{% elif payment.payment_mode == 'Cash' %}bg-primary{% else %}bg-info{% endif %}">
                                         {{ payment.payment_mode }}
                                     </span>
-                                </td>
-                                <td>
-                                    <span class="badge {% if payment.status == 'Paid' %}bg-success{% elif payment.status == 'Pending Verification' %}bg-warning{% else %}bg-secondary{% endif %}">
-                                        <i class="fas fa-{% if payment.status == 'Paid' %}check{% elif payment.status == 'Pending Verification' %}clock{% else %}info{% endif %} me-1"></i>{{ payment.status }}
-                                    </span>
-                                </td>
-                                <td>
+                                </div>
+                                <div class="col-md-3 text-md-end">
                                     <a href="/tenant/receipt/{{ payment.id }}" class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-download me-1"></i>Receipt
                                     </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="empty-state text-center py-5">
+                        <i class="fas fa-receipt text-muted mb-3" style="font-size: 3rem; opacity: 0.3;"></i>
+                        <h5 class="text-muted">No payments yet</h5>
+                        <p class="text-muted">Your payment history will appear here</p>
+                        <a href="/tenant/pay" class="btn btn-primary">Make First Payment</a>
+                    </div>
+                    {% endif %}
                 </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-receipt text-muted" style="font-size: 3rem;"></i>
-                    <h5 class="text-muted mt-3">No Payment History</h5>
-                    <p class="text-muted">Your payment records will appear here once you make your first payment.</p>
+            </div>
+
+            <!-- Right Sidebar -->
+            <div class="col-lg-4">
+                <!-- Quick Actions -->
+                <div class="quick-actions mb-4">
+                    <h6 class="fw-bold mb-3 text-muted text-uppercase">Quick Actions</h6>
+                    <div class="d-grid gap-2">
+                        <a href="/tenant/pay" class="btn btn-success btn-lg">
+                            <i class="fas fa-credit-card me-2"></i>Make Payment
+                        </a>
+                        <a href="/tenant/help" class="btn btn-warning">
+                            <i class="fas fa-question-circle me-2"></i>Request Help
+                        </a>
+                        <a href="/tenant/profile" class="btn btn-info">
+                            <i class="fas fa-user-edit me-2"></i>Update Profile
+                        </a>
+                        <a href="/tenant/statement" class="btn btn-outline-primary">
+                            <i class="fas fa-file-pdf me-2"></i>Download Statement
+                        </a>
+                    </div>
                 </div>
-                {% endif %}
+
+                <!-- Account Summary -->
+                <div class="account-summary">
+                    <h6 class="fw-bold mb-3 text-muted text-uppercase">Account Summary</h6>
+                    <div class="summary-cards">
+                        <div class="summary-item bg-white rounded-3 p-3 mb-3 shadow-sm">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="fas fa-home text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">Unit {{ tenant.house_number }}</div>
+                                    <small class="text-muted">Your rental unit</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-item bg-white rounded-3 p-3 mb-3 shadow-sm">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="fas fa-money-bill text-success"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">KSh {{ "%.0f"|format(tenant.monthly_rent) }}</div>
+                                    <small class="text-muted">Monthly rent</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-item bg-white rounded-3 p-3 mb-3 shadow-sm">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle bg-info bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="fas fa-receipt text-info"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold">{{ payments|length }} Payments</div>
+                                    <small class="text-muted">Total made</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-item bg-white rounded-3 p-3 shadow-sm">
+                            <div class="d-flex align-items-center">
+                                <div class="icon-circle {% if balance > 0 %}bg-danger{% elif balance < 0 %}bg-success{% else %}bg-secondary{% endif %} bg-opacity-10 rounded-circle p-2 me-3">
+                                    <i class="fas fa-balance-scale {% if balance > 0 %}text-danger{% elif balance < 0 %}text-success{% else %}text-secondary{% endif %}"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-semibold {% if balance > 0 %}text-danger{% elif balance < 0 %}text-success{% else %}text-secondary{% endif %}">
+                                        {% if balance > 0 %}Outstanding{% elif balance < 0 %}Credit{% else %}Paid Up{% endif %}
+                                    </div>
+                                    <small class="text-muted">Account status</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+.dashboard-container {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.top-bar {
+    border-bottom: 1px solid #e9ecef;
+}
+
+.balance-display {
+    border: 1px solid #e9ecef;
+}
+
+.status-card .card {
+    border-left: 4px solid #0d6efd;
+}
+
+.notification-item {
+    transition: all 0.2s ease;
+}
+
+.notification-item:hover {
+    transform: translateX(5px);
+}
+
+.bills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.bill-card {
+    transition: all 0.2s ease;
+}
+
+.bill-card:hover {
+    transform: translateY(-2px);
+}
+
+.payment-item {
+    transition: all 0.2s ease;
+}
+
+.payment-item:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+
+.summary-item {
+    transition: all 0.2s ease;
+}
+
+.summary-item:hover {
+    transform: translateY(-2px);
+}
+
+.icon-circle {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .balance-display {
+        margin-top: 1rem;
+    }
+    
+    .bills-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+function markAllRead() {
+    fetch('/tenant/notifications/mark-read', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+</script>
 {% endblock %}

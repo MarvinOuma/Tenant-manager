@@ -1,139 +1,242 @@
 {% extends "base.html" %}
 
-{% block title %}Record Payment - {{ tenant.name }}{% endblock %}
+{% block title %}Payment Processing - {{ tenant.name }}{% endblock %}
 
 {% block navbar %}
-<div class="ms-auto">
-    <a href="/admin" class="btn btn-outline-primary">
-        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-    </a>
-</div>
 {% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <!-- Tenant Info Card -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-user-circle text-primary me-3" style="font-size: 2.5rem;"></i>
-                    <div>
-                        <h5 class="mb-0 fw-bold">{{ tenant.name }}</h5>
-                        <p class="text-muted mb-0">
-                            <i class="fas fa-home me-1"></i>{{ tenant.house_number }} • 
-                            <i class="fas fa-money-bill me-1"></i>KSh {{ "%.2f"|format(tenant.monthly_rent) }}/month
-                        </p>
-                    </div>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-xl-10">
+            <!-- Header Section -->
+            <div class="d-flex align-items-center mb-4">
+                <button onclick="history.back()" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div>
+                    <h2 class="mb-0 fw-bold text-dark">Payment Processing</h2>
+                    <p class="text-muted mb-0">Record or initiate payment for tenant</p>
                 </div>
             </div>
-        </div>
-        
-        <!-- Payment Form -->
-        <div class="card">
-            <div class="card-header bg-light">
-                <h4 class="card-title mb-0">
-                    <i class="fas fa-plus-circle text-success me-2"></i>Record New Payment
-                </h4>
-            </div>
-            <div class="card-body p-4">
-                <form method="POST">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="amount" class="form-label fw-semibold">
-                                <i class="fas fa-money-bill me-1"></i>Payment Amount (KSh) *
-                            </label>
-                            <div class="input-group input-group-lg">
-                                <span class="input-group-text">KSh</span>
-                                <input type="number" class="form-control" id="amount" name="amount" step="0.01" min="0" placeholder="0.00" required>
-                            </div>
-                            <div class="form-text">
-                                <i class="fas fa-info-circle me-1"></i>Monthly rent: KSh {{ "%.2f"|format(tenant.monthly_rent) }}
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label for="payment_date" class="form-label fw-semibold">
-                                <i class="fas fa-calendar me-1"></i>Payment Date *
-                            </label>
-                            <input type="date" class="form-control form-control-lg" id="payment_date" name="payment_date" required>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold">
-                            <i class="fas fa-credit-card me-1"></i>Payment Method *
-                        </label>
-                        <div class="row g-2">
-                            <div class="col-6 col-md-3">
-                                <input type="radio" class="btn-check" name="payment_mode" id="cash" value="Cash" checked>
-                                <label class="btn btn-outline-primary w-100" for="cash">
-                                    <i class="fas fa-money-bill d-block mb-1"></i>
-                                    <small>Cash</small>
-                                </label>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <input type="radio" class="btn-check" name="payment_mode" id="mpesa" value="M-Pesa">
-                                <label class="btn btn-outline-success w-100" for="mpesa">
-                                    <i class="fas fa-mobile-alt d-block mb-1"></i>
-                                    <small>M-Pesa</small>
-                                </label>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <input type="radio" class="btn-check" name="payment_mode" id="bank" value="Bank Transfer">
-                                <label class="btn btn-outline-info w-100" for="bank">
-                                    <i class="fas fa-university d-block mb-1"></i>
-                                    <small>Bank Transfer</small>
-                                </label>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <input type="radio" class="btn-check" name="payment_mode" id="cheque" value="Cheque">
-                                <label class="btn btn-outline-warning w-100" for="cheque">
-                                    <i class="fas fa-file-invoice d-block mb-1"></i>
-                                    <small>Cheque</small>
-                                </label>
+
+            <div class="row g-4">
+                <!-- Left Column - Tenant Info & Payment Form -->
+                <div class="col-lg-8">
+                    <!-- Tenant Information Card -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-body p-4">
+                            <div class="d-flex align-items-center">
+                                {% if tenant.profile_picture %}
+                                    <img src="/static/profile_pictures/{{ tenant.profile_picture }}" 
+                                         class="rounded-circle me-4" 
+                                         style="width: 80px; height: 80px; object-fit: cover; border: 3px solid #e9ecef;" 
+                                         alt="Profile">
+                                {% else %}
+                                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-4" 
+                                         style="width: 80px; height: 80px;">
+                                        <i class="fas fa-user text-white" style="font-size: 2rem;"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="flex-grow-1">
+                                    <h4 class="mb-1 fw-bold">{{ tenant.name }}</h4>
+                                    <div class="row text-muted">
+                                        <div class="col-md-6">
+                                            <small><i class="fas fa-home me-1"></i>Unit: {{ tenant.house_number }}</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <small><i class="fas fa-phone me-1"></i>{{ tenant.phone }}</small>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <span class="badge bg-light text-dark">
+                                            <i class="fas fa-money-bill me-1"></i>Monthly: KSh {{ "%.2f"|format(tenant.monthly_rent) }}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-end">
+                                    <div class="mb-1">
+                                        <small class="text-muted text-uppercase fw-semibold">Current Balance</small>
+                                    </div>
+                                    <h3 class="mb-0 {% if balance > 0 %}text-danger{% elif balance < 0 %}text-success{% else %}text-secondary{% endif %}">
+                                        KSh {{ "%.2f"|format(balance if balance >= 0 else -balance) }}
+                                    </h3>
+                                    <small class="{% if balance > 0 %}text-danger{% elif balance < 0 %}text-success{% else %}text-secondary{% endif %} fw-semibold">
+                                        {% if balance > 0 %}OUTSTANDING{% elif balance < 0 %}CREDIT{% else %}PAID UP{% endif %}
+                                    </small>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="d-flex justify-content-between">
-                        <a href="/admin" class="btn btn-secondary">
-                            <i class="fas fa-times me-1"></i>Cancel
-                        </a>
-                        <div>
-                            <button type="button" class="btn btn-warning btn-lg me-2" onclick="initiateM-PesaPayment()">
-                                <i class="fas fa-mobile-alt me-2"></i>M-Pesa Payment
-                            </button>
-                            <button type="submit" class="btn btn-success btn-lg">
-                                <i class="fas fa-save me-2"></i>Record Payment
-                            </button>
+
+                    <!-- Payment Form -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h5 class="mb-0 fw-semibold">
+                                <i class="fas fa-credit-card text-primary me-2"></i>Payment Details
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <form method="POST" id="paymentForm">
+                                <!-- Amount and Date Row -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-dark">Payment Amount</label>
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-text bg-primary text-white fw-bold">KSh</span>
+                                            <input type="number" class="form-control" id="amount" name="amount" 
+                                                   step="0.01" min="1" placeholder="0.00" required>
+                                        </div>
+                                        <div class="form-text d-flex justify-content-between mt-2">
+                                            <span><i class="fas fa-info-circle me-1"></i>Monthly: KSh {{ "%.2f"|format(tenant.monthly_rent) }}</span>
+                                            {% if balance > 0 %}
+                                            <span class="text-danger fw-semibold">Due: KSh {{ "%.2f"|format(balance) }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-dark">Payment Date</label>
+                                        <input type="date" class="form-control form-control-lg" id="payment_date" name="payment_date" required>
+                                    </div>
+                                </div>
+
+                                <!-- Payment Method Selection -->
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold text-dark mb-3">Payment Method</label>
+                                    <div class="row g-3">
+                                        <div class="col-6 col-lg-3">
+                                            <input type="radio" class="btn-check" name="payment_mode" id="cash" value="Cash" checked>
+                                            <label class="btn btn-outline-secondary w-100 py-3" for="cash">
+                                                <i class="fas fa-money-bill-wave d-block mb-2" style="font-size: 1.5rem;"></i>
+                                                <span class="fw-semibold">Cash</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-6 col-lg-3">
+                                            <input type="radio" class="btn-check" name="payment_mode" id="mpesa" value="M-Pesa">
+                                            <label class="btn btn-outline-success w-100 py-3" for="mpesa">
+                                                <i class="fas fa-mobile-alt d-block mb-2" style="font-size: 1.5rem;"></i>
+                                                <span class="fw-semibold">M-Pesa</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-6 col-lg-3">
+                                            <input type="radio" class="btn-check" name="payment_mode" id="bank" value="Bank Transfer">
+                                            <label class="btn btn-outline-info w-100 py-3" for="bank">
+                                                <i class="fas fa-university d-block mb-2" style="font-size: 1.5rem;"></i>
+                                                <span class="fw-semibold">Bank</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-6 col-lg-3">
+                                            <input type="radio" class="btn-check" name="payment_mode" id="cheque" value="Cheque">
+                                            <label class="btn btn-outline-warning w-100 py-3" for="cheque">
+                                                <i class="fas fa-file-invoice d-block mb-2" style="font-size: 1.5rem;"></i>
+                                                <span class="fw-semibold">Cheque</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- M-Pesa Specific Fields -->
+                                <div id="mpesaFields" style="display: none;">
+                                    <div class="alert alert-success border-0" role="alert">
+                                        <i class="fas fa-mobile-alt me-2"></i>
+                                        <strong>M-Pesa Payment</strong> - Enter phone number to send STK push or record manual payment
+                                    </div>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">Phone Number for STK Push</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-success text-white">📱</span>
+                                                <input type="tel" class="form-control" id="mpesa_phone" name="mpesa_phone" 
+                                                       value="{{ tenant.phone }}" placeholder="254712345678">
+                                            </div>
+                                            <small class="form-text text-muted">Edit to send to different number</small>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold">Transaction Code (Optional)</label>
+                                            <input type="text" class="form-control" id="mpesa_code" name="mpesa_code" 
+                                                   placeholder="e.g., QH123ABC45" maxlength="10">
+                                            <small class="form-text text-muted">For manual payment recording</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                                    <button type="button" onclick="history.back()" class="btn btn-light px-4">
+                                        <i class="fas fa-times me-2"></i>Cancel
+                                    </button>
+                                    
+                                    <div class="d-flex gap-2">
+                                        <button type="button" id="stkPushBtn" class="btn btn-warning px-4" onclick="initiateSTKPush()" style="display: none;">
+                                            <i class="fas fa-mobile-alt me-2"></i>Send STK Push
+                                        </button>
+                                        <button type="submit" class="btn btn-success px-4">
+                                            <i class="fas fa-save me-2"></i>Record Payment
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                </form>
-            </div>
-        </div>
-        
-        <!-- Quick Actions -->
-        <div class="card mt-4">
-            <div class="card-body">
-                <h6 class="card-title">
-                    <i class="fas fa-bolt text-warning me-1"></i>Quick Actions
-                </h6>
-                <div class="row g-2">
-                    <div class="col-md-4">
-                        <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="setAmount({{ tenant.monthly_rent }})">
-                            <i class="fas fa-calendar-check me-1"></i>Full Month
-                        </button>
+                </div>
+
+                <!-- Right Column - Quick Actions & Recent Payments -->
+                <div class="col-lg-4">
+                    <!-- Quick Amount Actions -->
+                    <div class="card border-0 shadow-sm mb-4">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h6 class="mb-0 fw-semibold">
+                                <i class="fas fa-bolt text-warning me-2"></i>Quick Actions
+                            </h6>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="d-grid gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="setAmount({{ tenant.monthly_rent }})">
+                                    <i class="fas fa-calendar-check me-2"></i>Full Month (KSh {{ "%.0f"|format(tenant.monthly_rent) }})
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="setAmount({{ tenant.monthly_rent / 2 }})">
+                                    <i class="fas fa-calendar-minus me-2"></i>Half Month (KSh {{ "%.0f"|format(tenant.monthly_rent / 2) }})
+                                </button>
+                                {% if balance > 0 %}
+                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="setAmount({{ balance }})">
+                                    <i class="fas fa-balance-scale me-2"></i>Clear Balance (KSh {{ "%.0f"|format(balance) }})
+                                </button>
+                                {% endif %}
+                                <button type="button" class="btn btn-outline-info btn-sm" onclick="setToday()">
+                                    <i class="fas fa-calendar-day me-2"></i>Set Today's Date
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-4">
-                        <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="setAmount({{ tenant.monthly_rent / 2 }})">
-                            <i class="fas fa-calendar-minus me-1"></i>Half Month
-                        </button>
-                    </div>
-                    <div class="col-md-4">
-                        <button type="button" class="btn btn-outline-info btn-sm w-100" onclick="setToday()">
-                            <i class="fas fa-calendar-day me-1"></i>Today's Date
-                        </button>
+
+                    <!-- Recent Payments -->
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-bottom py-3">
+                            <h6 class="mb-0 fw-semibold">
+                                <i class="fas fa-history text-info me-2"></i>Recent Payments
+                            </h6>
+                        </div>
+                        <div class="card-body p-0">
+                            {% if recent_payments %}
+                                {% for payment in recent_payments %}
+                                <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                                    <div>
+                                        <div class="fw-semibold">{{ payment.payment_date }}</div>
+                                        <small class="text-muted">{{ payment.payment_mode }}</small>
+                                    </div>
+                                    <span class="badge bg-success fs-6">KSh {{ "%.2f"|format(payment.amount) }}</span>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="p-4 text-center text-muted">
+                                    <i class="fas fa-receipt" style="font-size: 2rem; opacity: 0.3;"></i>
+                                    <p class="mt-2 mb-0">No recent payments</p>
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -142,32 +245,80 @@
 </div>
 
 <script>
-// Set today's date as default
-document.getElementById('payment_date').value = new Date().toISOString().split('T')[0];
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Set today's date
+    document.getElementById('payment_date').value = new Date().toISOString().split('T')[0];
+    
+    // Initialize M-Pesa fields visibility
+    toggleMpesaFields();
+    
+    // Add event listeners
+    document.querySelectorAll('input[name="payment_mode"]').forEach(radio => {
+        radio.addEventListener('change', toggleMpesaFields);
+    });
+    
+    // Format phone number
+    document.getElementById('mpesa_phone').addEventListener('input', formatPhoneNumber);
+});
+
+// Toggle M-Pesa specific fields
+function toggleMpesaFields() {
+    const mpesaFields = document.getElementById('mpesaFields');
+    const stkPushBtn = document.getElementById('stkPushBtn');
+    const selectedMethod = document.querySelector('input[name="payment_mode"]:checked');
+    
+    if (selectedMethod && selectedMethod.value === 'M-Pesa') {
+        mpesaFields.style.display = 'block';
+        stkPushBtn.style.display = 'inline-block';
+    } else {
+        mpesaFields.style.display = 'none';
+        stkPushBtn.style.display = 'none';
+    }
+}
+
+// Format phone number
+function formatPhoneNumber(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    
+    if (value.startsWith('0')) {
+        value = '254' + value.substring(1);
+    } else if (value.startsWith('7') || value.startsWith('1')) {
+        value = '254' + value;
+    }
+    
+    e.target.value = value;
+}
 
 // Quick action functions
 function setAmount(amount) {
     document.getElementById('amount').value = amount.toFixed(2);
+    document.getElementById('amount').focus();
 }
 
 function setToday() {
     document.getElementById('payment_date').value = new Date().toISOString().split('T')[0];
 }
 
-// M-Pesa Payment Integration
-function initiateM-PesaPayment() {
+// STK Push functionality
+function initiateSTKPush() {
     const amount = document.getElementById('amount').value;
-    const phone = '{{ tenant.phone }}';
+    const phone = document.getElementById('mpesa_phone').value;
     
     if (!amount || amount <= 0) {
         alert('Please enter a valid payment amount');
         return;
     }
     
-    if (confirm(`Initiate M-Pesa payment of KSh ${amount} to ${phone}?`)) {
-        const btn = event.target;
+    if (!phone) {
+        alert('Please enter a phone number for M-Pesa payment');
+        return;
+    }
+    
+    if (confirm(`Send M-Pesa payment request of KSh ${parseFloat(amount).toLocaleString()} to ${phone}?`)) {
+        const btn = document.getElementById('stkPushBtn');
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sending...';
         
         fetch('/mpesa/pay/{{ tenant.id }}', {
             method: 'POST',
@@ -182,57 +333,38 @@ function initiateM-PesaPayment() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Payment request sent! Check your phone for M-Pesa prompt.');
-                // Poll for payment status
-                checkPaymentStatus(data.checkout_request_id);
+                alert('STK Push sent successfully! Check phone for payment prompt.');
+                // Optionally redirect or update UI
             } else {
-                alert('Payment failed: ' + data.message);
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>M-Pesa Payment';
+                alert('Failed to send STK Push: ' + data.message);
             }
         })
         .catch(error => {
             alert('Error: ' + error.message);
+        })
+        .finally(() => {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>M-Pesa Payment';
+            btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>Send STK Push';
         });
     }
 }
 
-function checkPaymentStatus(checkoutRequestId) {
-    const interval = setInterval(() => {
-        fetch(`/mpesa/status/${checkoutRequestId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                if (data.status === 'COMPLETED') {
-                    clearInterval(interval);
-                    alert('Payment successful! Redirecting to dashboard...');
-                    window.location.href = '/admin';
-                } else if (data.status === 'FAILED') {
-                    clearInterval(interval);
-                    alert('Payment failed. Please try again.');
-                    const btn = document.querySelector('button[onclick="initiateM-PesaPayment()"]');
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>M-Pesa Payment';
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Status check error:', error);
-        });
-    }, 3000); // Check every 3 seconds
+// Form validation
+document.getElementById('paymentForm').addEventListener('submit', function(e) {
+    const amount = document.getElementById('amount').value;
+    const date = document.getElementById('payment_date').value;
     
-    // Stop checking after 2 minutes
-    setTimeout(() => {
-        clearInterval(interval);
-        const btn = document.querySelector('button[onclick="initiateM-PesaPayment()"]');
-        if (btn.disabled) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>M-Pesa Payment';
-            alert('Payment timeout. Please check manually or try again.');
-        }
-    }, 120000);
-}
+    if (!amount || amount <= 0) {
+        e.preventDefault();
+        alert('Please enter a valid payment amount');
+        return;
+    }
+    
+    if (!date) {
+        e.preventDefault();
+        alert('Please select a payment date');
+        return;
+    }
+});
 </script>
 {% endblock %}

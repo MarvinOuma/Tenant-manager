@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block title %}Add Utility Bill - {{ tenant.name }}{% endblock %}
+
+{% block navbar %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="d-flex align-items-center mb-4">
+                <button onclick="history.back()" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div>
+                    <h2 class="mb-0 fw-bold text-dark">Add Utility Bill</h2>
+                    <p class="text-muted mb-0">Add utility bill for tenant</p>
+                </div>
+            </div>
+
+            <!-- Tenant Info -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        {% if tenant.profile_picture %}
+                            <img src="/static/profile_pictures/{{ tenant.profile_picture }}" 
+                                 class="rounded-circle me-3" 
+                                 style="width: 60px; height: 60px; object-fit: cover;" 
+                                 alt="Profile">
+                        {% else %}
+                            <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 60px; height: 60px;">
+                                <i class="fas fa-user text-white" style="font-size: 1.5rem;"></i>
+                            </div>
+                        {% endif %}
+                        
+                        <div>
+                            <h4 class="mb-1 fw-bold">{{ tenant.name }}</h4>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-home me-1"></i>Unit: {{ tenant.house_number }} • 
+                                <i class="fas fa-phone me-1"></i>{{ tenant.phone }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Utility Bill Form -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h5 class="mb-0 fw-semibold">
+                        <i class="fas fa-bolt text-warning me-2"></i>Utility Bill Details
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-dark">Bill Type</label>
+                                <select class="form-select form-select-lg" name="bill_type" required>
+                                    <option value="">Select utility type</option>
+                                    <option value="Electricity">⚡ Electricity</option>
+                                    <option value="Water">💧 Water</option>
+                                    <option value="Gas">🔥 Gas</option>
+                                    <option value="Internet">🌐 Internet</option>
+                                    <option value="Garbage">🗑️ Garbage Collection</option>
+                                    <option value="Security">🛡️ Security</option>
+                                    <option value="Other">📋 Other</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-dark">Amount</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-warning text-dark fw-bold">KSh</span>
+                                    <input type="number" class="form-control" name="amount" 
+                                           step="0.01" min="1" placeholder="0.00" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold text-dark">Due Date</label>
+                                <input type="date" class="form-control form-control-lg" name="due_date" required>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <div class="alert alert-info w-100 mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <small>Bill will be added to tenant's balance</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
+                            <button type="button" onclick="history.back()" class="btn btn-light px-4">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </button>
+                            
+                            <button type="submit" class="btn btn-warning px-4">
+                                <i class="fas fa-plus me-2"></i>Add Utility Bill
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="fas fa-bolt text-primary me-2"></i>Common Utility Amounts
+                    </h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="setAmount(500)">
+                                ⚡ Electricity<br><small>KSh 500</small>
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-info btn-sm w-100" onclick="setAmount(300)">
+                                💧 Water<br><small>KSh 300</small>
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-warning btn-sm w-100" onclick="setAmount(200)">
+                                🗑️ Garbage<br><small>KSh 200</small>
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-success btn-sm w-100" onclick="setAmount(1000)">
+                                🛡️ Security<br><small>KSh 1000</small>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Set today's date as default due date (next month)
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, today.getDate());
+    document.querySelector('input[name="due_date"]').value = nextMonth.toISOString().split('T')[0];
+});
+
+// Quick amount setter
+function setAmount(amount) {
+    document.querySelector('input[name="amount"]').value = amount.toFixed(2);
+}
+
+// Auto-select bill type when quick action is clicked
+document.querySelectorAll('.btn-outline-primary, .btn-outline-info, .btn-outline-warning, .btn-outline-success').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const text = this.textContent;
+        const select = document.querySelector('select[name="bill_type"]');
+        
+        if (text.includes('Electricity')) select.value = 'Electricity';
+        else if (text.includes('Water')) select.value = 'Water';
+        else if (text.includes('Garbage')) select.value = 'Garbage';
+        else if (text.includes('Security')) select.value = 'Security';
+    });
+});
+</script>
+{% endblock %}

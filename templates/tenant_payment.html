@@ -4,9 +4,9 @@
 
 {% block navbar %}
 <div class="ms-auto">
-    <a href="/tenant/{{ tenant.id }}" class="btn btn-outline-primary">
-        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
-    </a>
+    <button onclick="history.back()" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>Back
+    </button>
 </div>
 {% endblock %}
 

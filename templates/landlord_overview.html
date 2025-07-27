@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Landlord Overview - RentSync{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb bg-light p-3 rounded">
+        <li class="breadcrumb-item"><a href="/" class="text-decoration-none"><i class="fas fa-home"></i> Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-crown me-1"></i>Landlord Overview</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block navbar %}
+<div class="ms-auto">
+    <a href="/admin/tenant/add" class="btn btn-success me-2">
+        <i class="fas fa-user-plus me-1"></i>Add Tenant
+    </a>
+    <a href="/account" class="btn btn-outline-secondary me-2">
+        <i class="fas fa-user-cog me-1"></i>Account
+    </a>
+    <a href="/logout" class="btn btn-outline-danger">
+        <i class="fas fa-sign-out-alt me-1"></i>Logout
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-chart-line text-success me-3" style="font-size: 2.5rem;"></i>
+            <div>
+                <h2 class="mb-0 fw-bold">Landlord Overview</h2>
+                <p class="text-muted mb-0">Business insights and financial summary</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Financial Overview Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Tenants</h6>
+                        <h3 class="mb-0">{{ stats.total_tenants }}</h3>
+                    </div>
+                    <i class="fas fa-users" style="font-size: 2rem; opacity: 0.7;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Monthly Revenue</h6>
+                        <h3 class="mb-0">KSh {{ "%.0f"|format(stats.total_rent) }}</h3>
+                    </div>
+                    <i class="fas fa-money-bill-wave" style="font-size: 2rem; opacity: 0.7;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-{% if stats.total_balance > 0 %}danger{% elif stats.total_balance < 0 %}info{% else %}secondary{% endif %} text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Total Balance</h6>
+                        <h3 class="mb-0">KSh {{ "%.0f"|format(stats.total_balance if stats.total_balance >= 0 else -stats.total_balance) }}</h3>
+                        <small>{% if stats.total_balance > 0 %}Outstanding{% elif stats.total_balance < 0 %}Overpaid{% else %}Balanced{% endif %}</small>
+                    </div>
+                    <i class="fas fa-balance-scale" style="font-size: 2rem; opacity: 0.7;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="card-title">Collection Rate</h6>
+                        <h3 class="mb-0">{{ "%.0f"|format((stats.paid_count + stats.credit_count) / stats.total_tenants * 100 if stats.total_tenants > 0 else 0) }}%</h3>
+                    </div>
+                    <i class="fas fa-percentage" style="font-size: 2rem; opacity: 0.7;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Breakdown -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-danger">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
+                <h4 class="mt-2 text-danger">{{ stats.overdue_count }}</h4>
+                <p class="text-muted mb-0">Overdue Tenants</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-success">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle text-success" style="font-size: 2rem;"></i>
+                <h4 class="mt-2 text-success">{{ stats.paid_count }}</h4>
+                <p class="text-muted mb-0">Paid Up Tenants</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-info">
+            <div class="card-body text-center">
+                <i class="fas fa-plus-circle text-info" style="font-size: 2rem;"></i>
+                <h4 class="mt-2 text-info">{{ stats.credit_count }}</h4>
+                <p class="text-muted mb-0">Credit Balance</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Payments -->
+<div class="card">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-history text-primary me-2"></i>Recent Payments
+        </h5>
+        <span class="badge bg-primary">Last 10 payments</span>
+    </div>
+    
+    {% if recent_payments %}
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Tenant</th>
+                        <th>Amount</th>
+                        <th>Method</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for payment in recent_payments %}
+                    <tr>
+                        <td class="fw-medium">{{ payment.payment_date }}</td>
+                        <td>{{ payment.tenant_name }}</td>
+                        <td class="text-success fw-bold">KSh {{ "%.2f"|format(payment.amount) }}</td>
+                        <td>
+                            <span class="badge bg-light text-dark">
+                                {% if payment.payment_mode == 'M-Pesa' %}
+                                    <i class="fas fa-mobile-alt me-1"></i>
+                                {% elif payment.payment_mode == 'Cash' %}
+                                    <i class="fas fa-money-bill me-1"></i>
+                                {% else %}
+                                    <i class="fas fa-credit-card me-1"></i>
+                                {% endif %}
+                                {{ payment.payment_mode }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">
+                                <i class="fas fa-check me-1"></i>{{ payment.status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card-body text-center py-5">
+        <i class="fas fa-receipt text-muted" style="font-size: 3rem;"></i>
+        <h5 class="text-muted mt-3">No Recent Payments</h5>
+        <p class="text-muted">Payment history will appear here</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="fas fa-bolt text-warning me-1"></i>Quick Actions
+                </h6>
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <a href="/admin/tenant/add" class="btn btn-success w-100">
+                            <i class="fas fa-user-plus me-1"></i>Add New Tenant
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/admin/help-requests" class="btn btn-warning w-100">
+                            <i class="fas fa-question-circle me-1"></i>View Help Requests
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="/caretaker" class="btn btn-info w-100">
+                            <i class="fas fa-hard-hat me-1"></i>Caretaker View
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <button class="btn btn-outline-primary w-100" onclick="generateReport()">
+                            <i class="fas fa-chart-bar me-1"></i>Generate Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function generateReport() {
+    alert('Financial report generation coming soon!');
+}
+</script>
+{% endblock %}

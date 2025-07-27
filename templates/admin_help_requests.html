@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Help Requests - Admin{% endblock %}
+
+{% block navbar %}
+<div class="ms-auto">
+    <button onclick="history.back()" class="btn btn-outline-secondary me-2">
+        <i class="fas fa-arrow-left me-1"></i>Back
+    </button>
+    <a href="{{ dashboard_url }}" class="btn btn-outline-primary">
+        <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex align-items-center mb-4">
+            <i class="fas fa-question-circle text-warning me-3" style="font-size: 2.5rem;"></i>
+            <div>
+                <h2 class="mb-0 fw-bold">Help Requests</h2>
+                <p class="text-muted mb-0">Manage tenant support requests</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-light">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-list text-primary me-2"></i>All Help Requests
+            </h5>
+            <span class="badge bg-warning">{{ help_requests|length }} requests</span>
+        </div>
+        <div class="row">
+            <div class="col-md-6">
+                <input type="text" class="form-control" id="searchRequests" placeholder="Search by tenant name, category, or subject...">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="filterCategory">
+                    <option value="">All Categories</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Utilities">Utilities</option>
+                    <option value="Payment">Payment</option>
+                    <option value="Security">Security</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" id="filterStatus">
+                    <option value="">All Status</option>
+                    <option value="Open">Open</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                    <option value="Closed">Closed</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    {% if help_requests %}
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Tenant</th>
+                        <th>Category</th>
+                        <th>Subject</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in help_requests %}
+                    <tr>
+                        <td class="fw-medium">{{ request.created_at[:16] }}</td>
+                        <td>
+                            <div>
+                                <strong>{{ request.tenant_name }}</strong>
+                                <small class="text-muted d-block">{{ request.house_number }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-light text-dark">
+                                {% if request.category == 'Maintenance' %}
+                                    <i class="fas fa-tools me-1"></i>
+                                {% elif request.category == 'Utilities' %}
+                                    <i class="fas fa-bolt me-1"></i>
+                                {% elif request.category == 'Payment' %}
+                                    <i class="fas fa-credit-card me-1"></i>
+                                {% elif request.category == 'Security' %}
+                                    <i class="fas fa-shield-alt me-1"></i>
+                                {% else %}
+                                    <i class="fas fa-question me-1"></i>
+                                {% endif %}
+                                {{ request.category }}
+                            </span>
+                        </td>
+                        <td>
+                            <div>
+                                <strong>{{ request.subject }}</strong>
+                                <small class="text-muted d-block">{{ request.message[:50] }}{% if request.message|length > 50 %}...{% endif %}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if request.status == 'Open' %}bg-warning{% elif request.status == 'In Progress' %}bg-info{% elif request.status == 'Resolved' %}bg-success{% else %}bg-secondary{% endif %}">
+                                {{ request.status }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="/admin/help-request/{{ request.id }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-reply me-1"></i>Respond
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card-body text-center py-5">
+        <i class="fas fa-question-circle text-muted" style="font-size: 3rem;"></i>
+        <h5 class="text-muted mt-3">No Help Requests</h5>
+        <p class="text-muted">Tenant help requests will appear here</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function filterRequests() {
+    const searchTerm = document.getElementById('searchRequests').value.toLowerCase();
+    const categoryFilter = document.getElementById('filterCategory').value;
+    const statusFilter = document.getElementById('filterStatus').value;
+    const rows = document.querySelectorAll('tbody tr');
+    
+    rows.forEach(row => {
+        const tenantName = row.cells[1].textContent.toLowerCase();
+        const category = row.cells[2].textContent.trim();
+        const subject = row.cells[3].textContent.toLowerCase();
+        const status = row.cells[4].textContent.trim();
+        
+        const matchesSearch = tenantName.includes(searchTerm) || 
+                            category.toLowerCase().includes(searchTerm) || 
+                            subject.includes(searchTerm);
+        const matchesCategory = !categoryFilter || category.includes(categoryFilter);
+        const matchesStatus = !statusFilter || status.includes(statusFilter);
+        
+        row.style.display = (matchesSearch && matchesCategory && matchesStatus) ? '' : 'none';
+    });
+}
+
+document.getElementById('searchRequests').addEventListener('input', filterRequests);
+document.getElementById('filterCategory').addEventListener('change', filterRequests);
+document.getElementById('filterStatus').addEventListener('change', filterRequests);
+</script>
+{% endblock %}

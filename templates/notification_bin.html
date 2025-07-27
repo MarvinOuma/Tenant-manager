@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Notification Bin - {{ tenant.name }}{% endblock %}
+
+{% block navbar %}
+<div class="ms-auto">
+    <a href="/tenant/dashboard" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h4 class="card-title mb-0">
+                    <i class="fas fa-trash text-danger me-2"></i>Notification Bin
+                </h4>
+                {% if notifications %}
+                <button class="btn btn-sm btn-danger" onclick="clearBin()">
+                    <i class="fas fa-trash-alt me-1"></i>Clear Bin Permanently
+                </button>
+                {% endif %}
+            </div>
+            
+            {% if notifications %}
+            <div class="card-body p-0">
+                {% for notification in notifications %}
+                <div class="alert alert-secondary border-0 rounded-0 mb-0 {% if not loop.last %}border-bottom{% endif %}">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-trash-alt me-3 text-muted"></i>
+                        <div class="flex-grow-1">
+                            <div class="text-muted">{{ notification.message }}</div>
+                            <small class="text-muted">Deleted: {{ notification.deleted_at[:16] }}</small>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-success" onclick="restoreNotification({{ notification.id }})" title="Restore">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="permanentDelete({{ notification.id }})" title="Delete permanently">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="card-footer text-center">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Notifications in bin can be restored or permanently deleted
+                </small>
+            </div>
+            {% else %}
+            <div class="card-body text-center py-5">
+                <i class="fas fa-trash text-muted" style="font-size: 3rem;"></i>
+                <h5 class="text-muted mt-3">Bin is Empty</h5>
+                <p class="text-muted">Deleted notifications will appear here</p>
+                <a href="/tenant/dashboard" class="btn btn-primary">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+function restoreNotification(notificationId) {
+    if (confirm('Restore this notification?')) {
+        fetch(`/tenant/notifications/restore/${notificationId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Failed to restore notification');
+            }
+        });
+    }
+}
+
+function permanentDelete(notificationId) {
+    if (confirm('Permanently delete this notification? This cannot be undone.')) {
+        fetch(`/tenant/notifications/delete/${notificationId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Failed to delete notification');
+            }
+        });
+    }
+}
+
+function clearBin() {
+    if (confirm('Permanently delete ALL notifications in bin? This cannot be undone.')) {
+        fetch('/tenant/notifications/clear-bin', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Failed to clear bin');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

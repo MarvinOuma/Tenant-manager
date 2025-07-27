@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+
+{% block title %}Caretaker Dashboard - RentSync{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb bg-light p-3 rounded shadow-sm">
+        <li class="breadcrumb-item"><a href="/" class="text-decoration-none"><i class="fas fa-home"></i> Home</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-hard-hat me-1"></i>Caretaker Dashboard</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block navbar %}
+<div class="ms-auto">
+    <button onclick="history.back()" class="btn btn-outline-light me-2">
+        <i class="fas fa-arrow-left me-1"></i>Back
+    </button>
+    <a href="/admin/help-requests" class="btn btn-warning me-2">
+        <i class="fas fa-tools me-1"></i>Help Requests
+    </a>
+    <a href="/account" class="btn btn-outline-light me-2">
+        <i class="fas fa-user-cog me-1"></i>Account
+    </a>
+    <a href="/logout" class="btn btn-outline-danger">
+        <i class="fas fa-sign-out-alt me-1"></i>Logout
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <h1 class="display-6 fw-bold text-dark mb-2">
+                        <i class="fas fa-hard-hat text-warning me-3"></i>Caretaker Dashboard
+                    </h1>
+                    <p class="text-muted mb-0">Manage daily operations and tenant services</p>
+                </div>
+                <div class="text-end">
+                    <div class="badge bg-warning text-dark fs-6 px-3 py-2">
+                        <i class="fas fa-calendar me-1"></i><span id="currentDate"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-primary bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-users text-primary" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 fw-bold">{{ tenant_data|length }}</h3>
+                            <p class="text-muted mb-0">Total Tenants</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-danger bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-exclamation-triangle text-danger" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 fw-bold">{{ tenant_data|selectattr('status', 'equalto', 'Overdue')|list|length }}</h3>
+                            <p class="text-muted mb-0">Overdue Payments</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-success bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-check-circle text-success" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 fw-bold">{{ tenant_data|selectattr('status', 'equalto', 'Paid')|list|length }}</h3>
+                            <p class="text-muted mb-0">Paid Up</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center">
+                        <div class="rounded-circle bg-warning bg-opacity-10 p-3 me-3">
+                            <i class="fas fa-tools text-warning" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <div>
+                            <h3 class="mb-0 fw-bold">{{ help_requests|length }}</h3>
+                            <p class="text-muted mb-0">Help Requests</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Tenant Management Section -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0 fw-semibold">
+                            <i class="fas fa-users text-primary me-2"></i>Tenant Management
+                        </h5>
+                        <div class="d-flex gap-2">
+                            <a href="/admin/tenant/add" class="btn btn-success btn-sm">
+                                <i class="fas fa-user-plus me-1"></i>Add Tenant
+                            </a>
+                            <span class="badge bg-primary fs-6 d-flex align-items-center">{{ tenant_data|length }} tenants</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Search and Filter Controls -->
+                    <div class="search-container">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light">
+                                        <i class="fas fa-search text-muted"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="searchTenants" 
+                                           placeholder="Search by name, house number, or phone...">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select" id="filterStatus">
+                                    <option value="">All Status</option>
+                                    <option value="Overdue">Overdue</option>
+                                    <option value="Paid">Paid</option>
+                                    <option value="Credit">Credit</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                                    <i class="fas fa-times me-1"></i>Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-0">
+                    {% if tenant_data %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="tenantTable">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="border-0 fw-semibold">Tenant</th>
+                                    <th class="border-0 fw-semibold">Unit</th>
+                                    <th class="border-0 fw-semibold">Contact</th>
+                                    <th class="border-0 fw-semibold">Balance</th>
+                                    <th class="border-0 fw-semibold">Next Rent</th>
+                                    <th class="border-0 fw-semibold">Status</th>
+                                    <th class="border-0 fw-semibold">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in tenant_data %}
+                                <tr class="align-middle">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if data.tenant.profile_picture %}
+                                                <img src="/static/profile_pictures/{{ data.tenant.profile_picture }}" 
+                                                     class="rounded-circle me-3" 
+                                                     style="width: 40px; height: 40px; object-fit: cover;" 
+                                                     alt="Profile">
+                                            {% else %}
+                                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-3" 
+                                                     style="width: 40px; height: 40px;">
+                                                    <i class="fas fa-user text-white"></i>
+                                                </div>
+                                            {% endif %}
+                                            <div>
+                                                <div class="fw-semibold">{{ data.tenant.name }}</div>
+                                                <small class="text-muted">ID: {{ data.tenant.id }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-light text-dark">{{ data.tenant.house_number }}</span>
+                                    </td>
+                                    <td>
+                                        <div>
+                                            <div class="fw-semibold">{{ data.tenant.phone }}</div>
+                                            {% if data.tenant.email %}
+                                            <small class="text-muted">{{ data.tenant.email }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-bold {% if data.balance > 0 %}text-danger{% elif data.balance < 0 %}text-success{% else %}text-secondary{% endif %}">
+                                            KSh {{ "%.2f"|format(data.balance if data.balance >= 0 else -data.balance) }}
+                                        </div>
+                                        <small class="text-muted">Rent: KSh {{ "%.0f"|format(data.tenant.monthly_rent) }}</small>
+                                    </td>
+                                    <td>
+                                        {% if data.next_rent_info %}
+                                        <div class="fw-semibold">{{ data.next_rent_info.next_due_date }}</div>
+                                        <small class="{% if data.next_rent_info.is_overdue %}text-danger{% elif data.next_rent_info.days_until_due <= 3 %}text-warning{% else %}text-muted{% endif %}">
+                                            {% if data.next_rent_info.is_overdue %}
+                                                {{ data.next_rent_info.days_until_due|abs }} days overdue
+                                            {% elif data.next_rent_info.days_until_due == 0 %}
+                                                Due today!
+                                            {% else %}
+                                                {{ data.next_rent_info.days_until_due }} days
+                                            {% endif %}
+                                        </small>
+                                        <div class="small text-muted">KSh {{ "%.0f"|format(data.next_rent_info.amount_needed) }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="status-badge {% if data.status == 'Overdue' %}status-overdue{% elif data.status == 'Credit' %}status-credit{% else %}status-paid{% endif %}">
+                                            {{ data.status }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="/admin/payment/add/{{ data.tenant.id }}" 
+                                               class="btn btn-sm btn-success" title="Add Payment">
+                                                <i class="fas fa-plus"></i>
+                                            </a>
+                                            <a href="/admin/utility/add/{{ data.tenant.id }}" 
+                                               class="btn btn-sm btn-warning" title="Add Utility Bill">
+                                                <i class="fas fa-bolt"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-info" 
+                                                    onclick="sendNotification({{ data.tenant.id }})" title="Send Notification">
+                                                <i class="fas fa-bell"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" 
+                                                    onclick="removeTenant({{ data.tenant.id }}, '{{ data.tenant.name }}')" title="Remove Tenant">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-users text-muted" style="font-size: 3rem; opacity: 0.3;"></i>
+                        <h5 class="text-muted mt-3">No Tenants Found</h5>
+                        <p class="text-muted">Tenant information will appear here</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Help Requests Sidebar -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-semibold">
+                            <i class="fas fa-tools text-warning me-2"></i>Recent Help Requests
+                        </h6>
+                        <a href="/admin/help-requests" class="btn btn-sm btn-outline-warning">
+                            View All
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    {% if help_requests %}
+                        {% for request in help_requests %}
+                        <div class="p-3 border-bottom">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-semibold">{{ request.subject }}</h6>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <span class="badge bg-light text-dark me-2">{{ request.category }}</span>
+                                        <span class="badge {% if request.status == 'Open' %}bg-warning{% elif request.status == 'In Progress' %}bg-info{% else %}bg-success{% endif %}">
+                                            {{ request.status }}
+                                        </span>
+                                    </div>
+                                    <div class="text-muted small">
+                                        <i class="fas fa-user me-1"></i>{{ request.tenant_name }} ({{ request.house_number }})
+                                    </div>
+                                    <div class="text-muted small">
+                                        <i class="fas fa-clock me-1"></i>{{ request.created_at[:16] }}
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-muted small mb-2">{{ request.message[:80] }}{% if request.message|length > 80 %}...{% endif %}</p>
+                            <a href="/admin/help-request/{{ request.id }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-reply me-1"></i>Respond
+                            </a>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-tools text-muted" style="font-size: 2rem; opacity: 0.3;"></i>
+                        <p class="text-muted mt-2 mb-0">No help requests</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions Card -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="mb-0 fw-semibold">
+                        <i class="fas fa-bolt text-primary me-2"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body p-3">
+                    <div class="d-grid gap-2">
+                        <a href="/admin/help-requests" class="btn btn-warning">
+                            <i class="fas fa-tools me-2"></i>Manage Help Requests
+                        </a>
+                        <button class="btn btn-info" onclick="sendBulkNotification()">
+                            <i class="fas fa-bullhorn me-2"></i>Send Bulk Notification
+                        </button>
+                        <a href="/account" class="btn btn-outline-secondary">
+                            <i class="fas fa-user-cog me-2"></i>Account Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Search and filter functionality
+function filterTenants() {
+    const searchTerm = document.getElementById('searchTenants').value.toLowerCase();
+    const statusFilter = document.getElementById('filterStatus').value;
+    const rows = document.querySelectorAll('#tenantTable tbody tr');
+    
+    rows.forEach(row => {
+        const name = row.cells[0].textContent.toLowerCase();
+        const house = row.cells[1].textContent.toLowerCase();
+        const phone = row.cells[2].textContent.toLowerCase();
+        const status = row.cells[4].textContent.trim();
+        
+        const matchesSearch = name.includes(searchTerm) || 
+                            house.includes(searchTerm) || 
+                            phone.includes(searchTerm);
+        const matchesStatus = !statusFilter || status === statusFilter;
+        
+        row.style.display = (matchesSearch && matchesStatus) ? '' : 'none';
+    });
+}
+
+function clearFilters() {
+    document.getElementById('searchTenants').value = '';
+    document.getElementById('filterStatus').value = '';
+    filterTenants();
+}
+
+// Event listeners
+document.getElementById('searchTenants').addEventListener('input', filterTenants);
+document.getElementById('filterStatus').addEventListener('change', filterTenants);
+
+// Notification functions
+function sendNotification(tenantId) {
+    const message = prompt('Enter notification message:');
+    if (message) {
+        fetch(`/admin/notify/${tenantId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message: message,
+                type: 'info'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Notification sent successfully!');
+            } else {
+                alert('Failed to send notification: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+}
+
+function sendBulkNotification() {
+    const message = prompt('Enter message to send to all tenants:');
+    if (message) {
+        // This would need a bulk notification endpoint
+        alert('Bulk notification feature coming soon!');
+    }
+}
+
+// Remove tenant function
+function removeTenant(tenantId, tenantName) {
+    if (confirm(`Are you sure you want to remove tenant "${tenantName}"?\n\nThis will delete all their payments, bills, and records. This action cannot be undone.`)) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/tenant/remove/${tenantId}`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Add current date
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    const dateStr = today.toLocaleDateString('en-US', options);
+    
+    // Set current date in header
+    const currentDateEl = document.getElementById('currentDate');
+    if (currentDateEl) {
+        currentDateEl.textContent = dateStr;
+    }
+});
+</script>
+{% endblock %}

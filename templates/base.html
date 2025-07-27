@@ -17,19 +17,57 @@
             --dark-color: #1e293b;
             --light-bg: #f8fafc;
             --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
         }
         
         * { font-family: 'Inter', sans-serif; }
         body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
         .main-container { background: white; border-radius: 16px; box-shadow: var(--card-shadow); margin: 2rem auto; max-width: 1200px; }
-        .navbar-brand { font-weight: 700; font-size: 1.5rem; }
-        .card { border: none; border-radius: 12px; box-shadow: var(--card-shadow); }
-        .btn { border-radius: 8px; font-weight: 500; padding: 0.5rem 1.5rem; }
-        .btn-primary { background: var(--primary-color); border-color: var(--primary-color); }
-        .btn-success { background: var(--success-color); border-color: var(--success-color); }
-        .btn-danger { background: var(--danger-color); border-color: var(--danger-color); }
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), #3b82f6) !important;
+            border: none !important;
+            padding: 1rem 0;
+        }
+        .navbar-brand { font-weight: 700; font-size: 1.5rem; color: white !important; }
+        .navbar .btn { margin: 0 0.25rem; transition: all 0.3s ease; }
+        .navbar .btn:hover { transform: translateY(-2px); box-shadow: var(--hover-shadow); }
+        
+        .card { 
+            border: none; 
+            border-radius: 12px; 
+            box-shadow: var(--card-shadow); 
+            transition: all 0.3s ease;
+        }
+        .card:hover { box-shadow: var(--hover-shadow); transform: translateY(-2px); }
+        .card-header { 
+            background: linear-gradient(135deg, var(--light-bg), #ffffff);
+            border-bottom: 2px solid #e5e7eb;
+            font-weight: 600;
+            padding: 1.25rem;
+        }
+        .btn { 
+            border-radius: 8px; 
+            font-weight: 500; 
+            padding: 0.625rem 1.5rem;
+            transition: all 0.3s ease;
+            border: none;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: var(--hover-shadow); }
+        .btn-primary { background: linear-gradient(135deg, var(--primary-color), #3b82f6); }
+        .btn-success { background: linear-gradient(135deg, var(--success-color), #10b981); }
+        .btn-danger { background: linear-gradient(135deg, var(--danger-color), #ef4444); }
+        .btn-warning { background: linear-gradient(135deg, var(--warning-color), #f59e0b); }
+        
         .table { border-radius: 8px; overflow: hidden; }
-        .table thead th { background: var(--light-bg); border: none; font-weight: 600; }
+        .table thead th { 
+            background: linear-gradient(135deg, var(--light-bg), #ffffff);
+            border: none; 
+            font-weight: 600;
+            color: var(--dark-color);
+            padding: 1rem;
+        }
+        .table tbody tr { transition: all 0.2s ease; }
+        .table tbody tr:hover { background-color: #f9fafb; }
         .balance-positive { color: var(--danger-color); font-weight: 600; }
         .balance-negative { color: var(--success-color); font-weight: 600; }
         .balance-zero { color: var(--secondary-color); font-weight: 500; }
@@ -51,6 +89,9 @@
         </nav>
         
         <div class="container-fluid p-4">
+            {% block breadcrumb %}
+            {% endblock %}
+            
             {% with messages = get_flashed_messages() %}
                 {% if messages %}
                     {% for message in messages %}
