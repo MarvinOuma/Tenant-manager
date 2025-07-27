@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Make Payment - {{ tenant.name }}{% endblock %}
+
+{% block navbar %}
+<div class="ms-auto">
+    <a href="/tenant/{{ tenant.id }}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Tenant Info -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    {% if tenant.profile_picture %}
+                        <img src="/static/profile_pictures/{{ tenant.profile_picture }}" 
+                             class="rounded-circle border me-3" 
+                             style="width: 60px; height: 60px; object-fit: cover;" 
+                             alt="Profile Picture">
+                    {% else %}
+                        <i class="fas fa-user-circle text-primary me-3" style="font-size: 2.5rem;"></i>
+                    {% endif %}
+                    <div>
+                        <h5 class="mb-0 fw-bold">{{ tenant.name }}</h5>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-home me-1"></i>{{ tenant.house_number }} • 
+                            <i class="fas fa-money-bill me-1"></i>KSh {{ "%.2f"|format(tenant.monthly_rent) }}/month
+                        </p>
+                    </div>
+                    <div class="ms-auto text-end">
+                        <small class="text-muted">Current Balance</small>
+                        <h4 class="mb-0 {% if balance > 0 %}text-danger{% elif balance < 0 %}text-success{% else %}text-secondary{% endif %}">
+                            KSh {{ "%.2f"|format(balance if balance >= 0 else -balance) }}
+                        </h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Options -->
+        <div class="row g-4">
+            <!-- M-Pesa Payment -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-mobile-alt me-2"></i>M-Pesa Payment
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Pay instantly using M-Pesa STK Push</p>
+                        
+                        <form method="POST">
+                            <input type="hidden" name="payment_type" value="mpesa">
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Amount (KSh)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">KSh</span>
+                                    <input type="number" class="form-control" name="amount" step="0.01" min="1" value="{{ tenant.monthly_rent }}" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">M-Pesa Phone Number</label>
+                                <input type="tel" class="form-control" name="mpesa_phone" value="{{ tenant.phone }}" placeholder="254712345678" required>
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Payment prompt will be sent to this number
+                                </small>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-mobile-alt me-2"></i>Pay with M-Pesa
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Manual Payment -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-file-upload me-2"></i>Manual Payment
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">Submit payment details for verification</p>
+                        
+                        <form method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="payment_type" value="manual">
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Amount (KSh)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">KSh</span>
+                                    <input type="number" class="form-control" name="amount" step="0.01" min="1" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">M-Pesa Code (Optional)</label>
+                                <input type="text" class="form-control" name="mpesa_code" placeholder="e.g., QH123ABC45">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Receipt (Optional)</label>
+                                <input type="file" class="form-control" name="receipt" accept="image/*,.pdf">
+                                <small class="text-muted">Upload screenshot or receipt</small>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-paper-plane me-2"></i>Submit for Verification
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="fas fa-bolt text-warning me-1"></i>Quick Payment Amounts
+                </h6>
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-outline-primary btn-sm w-100" onclick="setAmount({{ tenant.monthly_rent }})">
+                            <i class="fas fa-calendar-check me-1"></i>Full Month (KSh {{ "%.0f"|format(tenant.monthly_rent) }})
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-outline-secondary btn-sm w-100" onclick="setAmount({{ tenant.monthly_rent / 2 }})">
+                            <i class="fas fa-calendar-minus me-1"></i>Half Month (KSh {{ "%.0f"|format(tenant.monthly_rent / 2) }})
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="button" class="btn btn-outline-info btn-sm w-100" onclick="setAmount({{ balance if balance > 0 else tenant.monthly_rent }})">
+                            <i class="fas fa-balance-scale me-1"></i>Clear Balance (KSh {{ "%.0f"|format(balance if balance > 0 else tenant.monthly_rent) }})
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function setAmount(amount) {
+    document.querySelectorAll('input[name="amount"]').forEach(input => {
+        input.value = amount.toFixed(2);
+    });
+}
+</script>
+{% endblock %}
