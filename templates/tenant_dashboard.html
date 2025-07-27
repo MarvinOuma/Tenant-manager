@@ -13,11 +13,34 @@
 {% block content %}
 <div class="row">
     <div class="col-12">
-        <div class="d-flex align-items-center mb-4">
-            <i class="fas fa-user-circle text-primary me-3" style="font-size: 2.5rem;"></i>
+        <div class="d-flex align-items-center justify-content-between mb-4">
+            <div class="d-flex align-items-center">
+                {% if tenant.profile_picture %}
+                    <img src="/static/profile_pictures/{{ tenant.profile_picture }}" 
+                         class="rounded-circle border me-3" 
+                         style="width: 60px; height: 60px; object-fit: cover;" 
+                         alt="Profile Picture">
+                {% else %}
+                    <i class="fas fa-user-circle text-primary me-3" style="font-size: 2.5rem;"></i>
+                {% endif %}
+                <div>
+                    <h2 class="mb-0 fw-bold">{{ tenant.name }}</h2>
+                    <p class="text-muted mb-0">Tenant Dashboard</p>
+                </div>
+            </div>
             <div>
-                <h2 class="mb-0 fw-bold">{{ tenant.name }}</h2>
-                <p class="text-muted mb-0">Tenant Dashboard</p>
+                <a href="/tenant/profile" class="btn btn-outline-secondary me-2">
+                    <i class="fas fa-user-edit me-1"></i>Profile
+                </a>
+                <a href="/tenant/pay" class="btn btn-success me-2">
+                    <i class="fas fa-credit-card me-1"></i>Make Payment
+                </a>
+                <a href="/tenant/statement" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-download me-1"></i>Download Statement
+                </a>
+                <a href="/tenant/logout" class="btn btn-outline-danger">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
             </div>
         </div>
     </div>
@@ -116,6 +139,7 @@
                                 <th><i class="fas fa-money-bill me-1"></i>Amount</th>
                                 <th><i class="fas fa-credit-card me-1"></i>Payment Mode</th>
                                 <th><i class="fas fa-check-circle me-1"></i>Status</th>
+                            <th><i class="fas fa-download me-1"></i>Receipt</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -138,9 +162,14 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-check me-1"></i>{{ payment.status }}
+                                    <span class="badge {% if payment.status == 'Paid' %}bg-success{% elif payment.status == 'Pending Verification' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                        <i class="fas fa-{% if payment.status == 'Paid' %}check{% elif payment.status == 'Pending Verification' %}clock{% else %}info{% endif %} me-1"></i>{{ payment.status }}
                                     </span>
+                                </td>
+                                <td>
+                                    <a href="/tenant/receipt/{{ payment.id }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-download me-1"></i>Receipt
+                                    </a>
                                 </td>
                             </tr>
                             {% endfor %}
