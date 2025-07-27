@@ -27,17 +27,13 @@
                         <h4 class="card-title fw-semibold mb-3">Tenant Portal</h4>
                         <p class="card-text text-muted mb-4">View your payment history, check balance, and access your rental information</p>
                         
-                        <form id="tenantForm" class="mb-3">
-                            <div class="input-group mb-3">
-                                <span class="input-group-text"><i class="fas fa-id-card"></i></span>
-                                <input type="number" class="form-control" name="id" placeholder="Enter your Tenant ID" min="1" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                        <div class="mb-3">
+                            <a href="/tenant/login" class="btn btn-primary btn-lg w-100">
                                 <i class="fas fa-sign-in-alt me-2"></i>Access Dashboard
-                            </button>
-                        </form>
+                            </a>
+                        </div>
                         
-                        <small class="text-muted">Don't know your ID? Contact your landlord</small>
+                        <small class="text-muted">Login with your phone number and house number</small>
                     </div>
                 </div>
             </div>
@@ -88,13 +84,5 @@
     </div>
 </div>
 
-<script>
-document.getElementById('tenantForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const id = document.querySelector('input[name="id"]').value;
-    if (id) {
-        window.location.href = '/tenant/' + id;
-    }
-});
-</script>
+
 {% endblock %}
