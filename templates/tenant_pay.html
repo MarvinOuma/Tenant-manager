@@ -68,15 +68,16 @@
 
                             <!-- Payment Method Tabs -->
                             <div class="payment-methods mb-4">
+                                <h6 class="fw-bold text-dark mb-3">Choose Payment Method</h6>
                                 <ul class="nav nav-pills nav-fill" role="tablist">
                                     <li class="nav-item">
-                                        <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#mpesa-tab" type="button">
-                                            📱 M-Pesa
+                                        <button class="nav-link active fw-bold" data-bs-toggle="pill" data-bs-target="#mpesa-tab" type="button" style="color: #000 !important;">
+                                            📱 M-Pesa Payment
                                         </button>
                                     </li>
                                     <li class="nav-item">
-                                        <button class="nav-link" data-bs-toggle="pill" data-bs-target="#manual-tab" type="button">
-                                            📄 Manual
+                                        <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#manual-tab" type="button" style="color: #000 !important;">
+                                            📄 Manual Entry
                                         </button>
                                     </li>
                                 </ul>
@@ -178,11 +179,21 @@
 
 .nav-pills .nav-link {
     border-radius: 0.5rem;
-    font-weight: 600;
+    font-weight: 700;
+    color: #000 !important;
+    background-color: #f8f9fa;
+    border: 2px solid #e9ecef;
 }
 
 .nav-pills .nav-link.active {
-    background-color: #0d6efd;
+    background-color: #0d6efd !important;
+    color: #fff !important;
+    border-color: #0d6efd;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: #e9ecef;
+    color: #000 !important;
 }
 
 .quick-amounts .btn {
