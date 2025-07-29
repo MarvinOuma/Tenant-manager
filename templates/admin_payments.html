@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}All Payments - RentSync{% endblock %}
+
+{% block navbar %}
+<div class="ms-auto">
+    <a href="/caretaker" class="btn btn-outline-light me-2">
+        <i class="fas fa-arrow-left me-1"></i>Dashboard
+    </a>
+    <a href="/logout" class="btn btn-outline-danger">
+        <i class="fas fa-sign-out-alt me-1"></i>Logout
+    </a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark mb-1">Payment Records</h2>
+            <p class="text-muted mb-0">View all payments made by tenants</p>
+        </div>
+        <div class="text-end">
+            <div class="badge bg-success fs-5 px-3 py-2">
+                Total: KSh {{ "%.2f"|format(total_amount) }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-receipt text-primary mb-2" style="font-size: 2rem;"></i>
+                    <h4 class="fw-bold">{{ payments|length }}</h4>
+                    <small class="text-muted">Total Payments</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-mobile-alt text-success mb-2" style="font-size: 2rem;"></i>
+                    <h4 class="fw-bold">{{ payments|selectattr('payment_mode', 'equalto', 'M-Pesa')|list|length }}</h4>
+                    <small class="text-muted">M-Pesa Payments</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-money-bill text-primary mb-2" style="font-size: 2rem;"></i>
+                    <h4 class="fw-bold">{{ payments|selectattr('payment_mode', 'equalto', 'Cash')|list|length }}</h4>
+                    <small class="text-muted">Cash Payments</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-check-circle text-success mb-2" style="font-size: 2rem;"></i>
+                    <h4 class="fw-bold">{{ payments|selectattr('status', 'equalto', 'Paid')|list|length }}</h4>
+                    <small class="text-muted">Completed</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payments Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="fas fa-list text-info me-2"></i>Payment History
+                </h5>
+                <div class="d-flex gap-2">
+                    <input type="text" class="form-control form-control-sm" id="searchPayments" placeholder="Search payments..." style="width: 200px;">
+                    <select class="form-select form-select-sm" id="filterMethod" style="width: 150px;">
+                        <option value="">All Methods</option>
+                        <option value="M-Pesa">M-Pesa</option>
+                        <option value="Cash">Cash</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Manual Entry">Manual Entry</option>
+                    </select>
+                    <select class="form-select form-select-sm" id="filterStatus" style="width: 150px;">
+                        <option value="">All Status</option>
+                        <option value="Paid">Paid</option>
+                        <option value="Pending Verification">Pending Verification</option>
+                        <option value="Declined">Declined</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            {% if payments %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="paymentsTable">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="border-0 fw-semibold">Date</th>
+                            <th class="border-0 fw-semibold">Tenant</th>
+                            <th class="border-0 fw-semibold">Amount</th>
+                            <th class="border-0 fw-semibold">Method</th>
+                            <th class="border-0 fw-semibold">Status</th>
+                            <th class="border-0 fw-semibold">Code</th>
+                            <th class="border-0 fw-semibold">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payment in payments %}
+                        <tr class="align-middle">
+                            <td>
+                                <div class="fw-semibold">{{ payment.payment_date }}</div>
+                                <small class="text-muted">{{ payment.created_at[:16] if payment.created_at else '' }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold">{{ payment.tenant_name }}</div>
+                                <small class="text-muted">Unit {{ payment.house_number }} • {{ payment.phone }}</small>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-success fs-6">KSh {{ "%.2f"|format(payment.amount) }}</span>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if payment.payment_mode == 'M-Pesa' %}bg-success
+                                    {% elif payment.payment_mode == 'Cash' %}bg-primary
+                                    {% elif payment.payment_mode == 'Bank Transfer' %}bg-info
+                                    {% elif payment.payment_mode == 'Manual Entry' %}bg-warning
+                                    {% else %}bg-secondary{% endif %}">
+                                    {% if payment.payment_mode == 'M-Pesa' %}
+                                        <i class="fas fa-mobile-alt me-1"></i>
+                                    {% elif payment.payment_mode == 'Cash' %}
+                                        <i class="fas fa-money-bill me-1"></i>
+                                    {% elif payment.payment_mode == 'Bank Transfer' %}
+                                        <i class="fas fa-university me-1"></i>
+                                    {% elif payment.payment_mode == 'Manual Entry' %}
+                                        <i class="fas fa-edit me-1"></i>
+                                    {% else %}
+                                        <i class="fas fa-file-invoice me-1"></i>
+                                    {% endif %}
+                                    {{ payment.payment_mode }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge 
+                                    {% if payment.status == 'Paid' %}bg-success
+                                    {% elif payment.status == 'Pending Verification' %}bg-warning
+                                    {% elif payment.status == 'Declined' %}bg-danger
+                                    {% elif payment.status == 'Pending' %}bg-info
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ payment.status }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if payment.mpesa_code %}
+                                    <code class="bg-light px-2 py-1 rounded">{{ payment.mpesa_code }}</code>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    {% if payment.status == 'Pending Verification' %}
+                                    <form method="POST" action="/admin/payment/approve/{{ payment.id }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-success" title="Approve Payment" onclick="return confirm('Approve this payment?')">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </form>
+                                    <form method="POST" action="/admin/payment/decline/{{ payment.id }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-danger" title="Decline Payment" onclick="return confirm('Decline this payment?')">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    <a href="/admin/payment/add/{{ payment.tenant_id }}" 
+                                       class="btn btn-sm btn-outline-primary" title="Add Payment">
+                                        <i class="fas fa-plus"></i>
+                                    </a>
+                                    {% if payment.receipt_file %}
+                                    <a href="/static/receipts/{{ payment.receipt_file }}" 
+                                       class="btn btn-sm btn-outline-info" title="View Receipt" target="_blank">
+                                        <i class="fas fa-file-alt"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-receipt text-muted" style="font-size: 4rem; opacity: 0.3;"></i>
+                <h4 class="text-muted mt-3">No Payments Found</h4>
+                <p class="text-muted">Payment records will appear here</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+// Search and filter functionality
+function filterPayments() {
+    const searchTerm = document.getElementById('searchPayments').value.toLowerCase();
+    const methodFilter = document.getElementById('filterMethod').value;
+    const statusFilter = document.getElementById('filterStatus').value;
+    const rows = document.querySelectorAll('#paymentsTable tbody tr');
+    
+    rows.forEach(row => {
+        const tenantName = row.cells[1].textContent.toLowerCase();
+        const amount = row.cells[2].textContent.toLowerCase();
+        const method = row.cells[3].textContent.trim();
+        const status = row.cells[4].textContent.trim();
+        const code = row.cells[5].textContent.toLowerCase();
+        
+        const matchesSearch = tenantName.includes(searchTerm) || 
+                            amount.includes(searchTerm) || 
+                            code.includes(searchTerm);
+        const matchesMethod = !methodFilter || method.includes(methodFilter);
+        const matchesStatus = !statusFilter || status.includes(statusFilter);
+        
+        row.style.display = (matchesSearch && matchesMethod && matchesStatus) ? '' : 'none';
+    });
+}
+
+// Event listeners
+document.getElementById('searchPayments').addEventListener('input', filterPayments);
+document.getElementById('filterMethod').addEventListener('change', filterPayments);
+document.getElementById('filterStatus').addEventListener('change', filterPayments);
+</script>
+{% endblock %}

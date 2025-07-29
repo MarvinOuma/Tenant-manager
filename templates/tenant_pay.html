@@ -1,164 +1,160 @@
 {% extends "base.html" %}
 
-{% block title %}Pay Rent - {{ tenant.name }}{% endblock %}
+{% block title %}Pay Rent{% endblock %}
 
 {% block navbar %}
 <div class="ms-auto">
-    <a href="/tenant/dashboard" class="btn btn-outline-light">
-        <i class="fas fa-arrow-left me-1"></i>Back
-    </a>
+    <a href="/tenant/dashboard" class="btn btn-light">← Back</a>
 </div>
 {% endblock %}
 
 {% block content %}
-<div class="pay-container" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh;">
+<div class="pay-page" style="background: #0f0f23; min-height: 100vh; color: white;">
     <div class="container py-5">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <div class="pay-icon mb-3">
+                <div class="icon-circle" style="width: 80px; height: 80px; background: linear-gradient(45deg, #00d4aa, #00a8ff); border-radius: 50%; margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                    <i class="fas fa-credit-card" style="font-size: 2rem; color: white;"></i>
+                </div>
+            </div>
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">Pay Rent</h1>
+            <p style="color: #8892b0; font-size: 1.1rem;">{{ tenant.name }} • Unit {{ tenant.house_number }}</p>
+        </div>
+
         <div class="row justify-content-center">
-            <div class="col-lg-6">
-                <!-- Main Payment Card -->
-                <div class="payment-card bg-white rounded-4 shadow-lg overflow-hidden">
-                    <!-- Header -->
-                    <div class="card-header text-white text-center py-4" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);">
-                        <div class="header-icon bg-white rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                            <i class="fas fa-credit-card text-primary" style="font-size: 1.5rem;"></i>
-                        </div>
-                        <h2 class="fw-bold mb-2 text-white">Pay Rent</h2>
-                        <p class="mb-0 text-white" style="opacity: 0.9;">{{ tenant.name }} - Unit {{ tenant.house_number }}</p>
+            <div class="col-lg-8">
+                <!-- Balance Card -->
+                <div class="balance-card mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; padding: 2rem; text-align: center;">
+                    <h3 style="color: rgba(255,255,255,0.8); font-weight: 600; margin-bottom: 1rem;">Account Balance</h3>
+                    <div style="font-size: 3rem; font-weight: 900; margin-bottom: 1rem; {% if balance > 0 %}color: #ff6b6b;{% elif balance < 0 %}color: #51cf66;{% else %}color: white;{% endif %}">
+                        KSh {{ "%.2f"|format(balance if balance >= 0 else -balance) }}
                     </div>
-
-                    <!-- Balance Display -->
-                    <div class="balance-section p-4 bg-light">
-                        <div class="text-center">
-                            <h6 class="text-dark text-uppercase fw-bold mb-2">Current Balance</h6>
-                            <h2 class="fw-bold mb-2 {% if balance > 0 %}text-danger{% elif balance < 0 %}text-success{% else %}text-secondary{% endif %}">
-                                KSh {{ "%.2f"|format(balance if balance >= 0 else -balance) }}
-                            </h2>
-                            <span class="badge {% if balance > 0 %}bg-danger{% elif balance < 0 %}bg-success{% else %}bg-secondary{% endif %} fs-6">
-                                {% if balance > 0 %}OUTSTANDING{% elif balance < 0 %}CREDIT{% else %}PAID UP{% endif %}
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Payment Form -->
-                    <div class="card-body p-4">
-                        <form method="POST" enctype="multipart/form-data" id="paymentForm">
-                            <!-- Amount -->
-                            <div class="mb-4">
-                                <label class="form-label fw-bold text-dark fs-6">Payment Amount</label>
-                                <div class="input-group input-group-lg">
-                                    <span class="input-group-text bg-success text-white fw-bold">KSh</span>
-                                    <input type="number" class="form-control" name="amount" id="amount" step="0.01" min="1" placeholder="0.00" required>
-                                </div>
-                                <div class="quick-amounts mt-2">
-                                    <div class="d-flex gap-2 flex-wrap">
-                                        {% if balance > 0 %}
-                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="setAmount({{ balance }})">
-                                            Clear Balance
-                                        </button>
-                                        {% endif %}
-                                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="setAmount({{ tenant.monthly_rent }})">
-                                            Monthly Rent
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setAmount({{ tenant.monthly_rent / 2 }})">
-                                            Half Rent
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Payment Method Tabs -->
-                            <div class="payment-methods mb-4">
-                                <h6 class="fw-bold text-dark mb-3">Choose Payment Method</h6>
-                                <ul class="nav nav-pills nav-fill" role="tablist">
-                                    <li class="nav-item">
-                                        <button class="nav-link active fw-bold" data-bs-toggle="pill" data-bs-target="#mpesa-tab" type="button" style="color: #000 !important;">
-                                            📱 M-Pesa Payment
-                                        </button>
-                                    </li>
-                                    <li class="nav-item">
-                                        <button class="nav-link fw-bold" data-bs-toggle="pill" data-bs-target="#manual-tab" type="button" style="color: #000 !important;">
-                                            📄 Manual Entry
-                                        </button>
-                                    </li>
-                                </ul>
-                            </div>
-
-                            <!-- Tab Content -->
-                            <div class="tab-content">
-                                <!-- M-Pesa Tab -->
-                                <div class="tab-pane fade show active" id="mpesa-tab">
-                                    <div class="mpesa-section">
-                                        <div class="mb-3">
-                                            <label class="form-label fw-bold text-dark">Phone Number</label>
-                                            <div class="input-group">
-                                                <span class="input-group-text bg-success text-white">📱</span>
-                                                <input type="tel" class="form-control" id="mpesa_phone" value="{{ tenant.phone }}" placeholder="254712345678">
-                                            </div>
-                                            <small class="form-text text-muted">Number to receive STK push</small>
-                                        </div>
-                                        
-                                        <button type="button" class="btn btn-success btn-lg w-100" onclick="payWithMpesa()">
-                                            <i class="fas fa-mobile-alt me-2"></i>Pay with M-Pesa
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Manual Tab -->
-                                <div class="tab-pane fade" id="manual-tab">
-                                    <div class="manual-section">
-                                        <div class="mb-3">
-                                            <label class="form-label fw-bold text-dark">M-Pesa Code (Optional)</label>
-                                            <input type="text" class="form-control" name="mpesa_code" placeholder="QH123ABC45" maxlength="10">
-                                            <small class="form-text text-muted">Confirmation code if available</small>
-                                        </div>
-                                        
-                                        <div class="mb-3">
-                                            <label class="form-label fw-bold text-dark">Receipt (Optional)</label>
-                                            <input type="file" class="form-control" name="receipt" accept="image/*,.pdf">
-                                            <small class="form-text text-muted">Upload payment receipt</small>
-                                        </div>
-                                        
-                                        <button type="submit" class="btn btn-info btn-lg w-100">
-                                            <i class="fas fa-save me-2"></i>Record Payment
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- Footer Info -->
-                    <div class="card-footer bg-light text-center py-3">
-                        <small class="text-muted">
-                            <i class="fas fa-shield-alt me-1"></i>Secure payment processing
-                        </small>
+                    <div class="status-badge" style="display: inline-block; padding: 0.5rem 1.5rem; border-radius: 25px; font-weight: 700; {% if balance > 0 %}background: rgba(255,107,107,0.2); color: #ff6b6b; border: 2px solid #ff6b6b;{% elif balance < 0 %}background: rgba(81,207,102,0.2); color: #51cf66; border: 2px solid #51cf66;{% else %}background: rgba(255,255,255,0.2); color: white; border: 2px solid white;{% endif %}">
+                        {% if balance > 0 %}OUTSTANDING{% elif balance < 0 %}CREDIT{% else %}PAID UP{% endif %}
                     </div>
                 </div>
 
-                <!-- Info Cards -->
-                <div class="row g-3 mt-3">
-                    <div class="col-md-6">
-                        <div class="info-card bg-white bg-opacity-10 backdrop-blur rounded-3 p-3 text-white">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-bolt text-warning me-2"></i>
-                                <div>
-                                    <small class="fw-semibold">Auto Bill Payment</small>
-                                    <div class="small opacity-75">Utility bills paid automatically</div>
-                                </div>
+                <!-- Amount Input -->
+                <div class="amount-section mb-4" style="background: #1a1a2e; border-radius: 20px; padding: 2rem;">
+                    <h4 style="color: white; font-weight: 700; margin-bottom: 1.5rem; text-align: center;">Enter Amount</h4>
+                    
+                    <div class="amount-input mb-3">
+                        <div style="position: relative;">
+                            <span style="position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #00d4aa; font-weight: 700; font-size: 1.2rem; z-index: 2;">KSh</span>
+                            <input type="number" id="amount" step="0.01" min="1" placeholder="0.00" 
+                                   style="width: 100%; padding: 1rem 1rem 1rem 70px; font-size: 1.5rem; font-weight: 700; background: #16213e; border: 2px solid #2d3748; border-radius: 15px; color: white; text-align: center;">
+                        </div>
+                    </div>
+
+                    <div class="quick-amounts" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 0.5rem;">
+                        {% if balance > 0 %}
+                        <button onclick="setAmount({{ balance }})" style="padding: 0.7rem; background: linear-gradient(45deg, #ff6b6b, #ee5a52); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer;">
+                            Clear Balance
+                        </button>
+                        {% endif %}
+                        <button onclick="setAmount({{ tenant.monthly_rent }})" style="padding: 0.7rem; background: linear-gradient(45deg, #4ecdc4, #44a08d); border: none; border-radius: 10px; color: white; font-weight: 600; cursor: pointer;">
+                            Monthly Rent
+                        </button>
+                        <button onclick="setAmount({{ tenant.monthly_rent / 2 }})" style="padding: 0.7rem; background: linear-gradient(45deg, #a8edea, #fed6e3); border: none; border-radius: 10px; color: #333; font-weight: 600; cursor: pointer;">
+                            Half Rent
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Payment Methods -->
+                <div class="payment-methods">
+                    <h4 style="color: white; font-weight: 700; margin-bottom: 1.5rem; text-align: center;">Choose Payment Method</h4>
+                    
+                    <div class="row g-3">
+                        <!-- M-Pesa -->
+                        <div class="col-md-6">
+                            <div class="method-card" onclick="selectMethod('mpesa')" style="background: linear-gradient(135deg, #00d4aa, #00a8ff); border-radius: 20px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; border: 3px solid transparent;">
+                                <i class="fas fa-mobile-alt" style="font-size: 3rem; margin-bottom: 1rem; color: white;"></i>
+                                <h5 style="color: white; font-weight: 700; margin-bottom: 1rem;">M-Pesa Payment</h5>
+                                <p style="color: rgba(255,255,255,0.8); margin-bottom: 1.5rem; font-size: 0.9rem;">Instant payment via STK push</p>
+                                <button class="method-btn" style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.2); border: 2px solid white; border-radius: 10px; color: white; font-weight: 600; cursor: pointer;">
+                                    Pay with M-Pesa
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Manual -->
+                        <div class="col-md-6">
+                            <div class="method-card" onclick="selectMethod('manual')" style="background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 20px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; border: 3px solid transparent;">
+                                <i class="fas fa-edit" style="font-size: 3rem; margin-bottom: 1rem; color: white;"></i>
+                                <h5 style="color: white; font-weight: 700; margin-bottom: 1rem;">Manual Entry</h5>
+                                <p style="color: rgba(255,255,255,0.8); margin-bottom: 1.5rem; font-size: 0.9rem;">Record existing payment</p>
+                                <button class="method-btn" style="width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.2); border: 2px solid white; border-radius: 10px; color: white; font-weight: 600; cursor: pointer;">
+                                    Record Payment
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="info-card bg-white bg-opacity-10 backdrop-blur rounded-3 p-3 text-white">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-receipt text-info me-2"></i>
-                                <div>
-                                    <small class="fw-semibold">Instant Receipt</small>
-                                    <div class="small opacity-75">Download receipt immediately</div>
-                                </div>
+                </div>
+
+                <!-- M-Pesa Form -->
+                <div id="mpesaForm" style="display: none; background: #1a1a2e; border-radius: 20px; padding: 2rem; margin-top: 2rem;">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <i class="fas fa-mobile-alt" style="font-size: 2.5rem; color: #00d4aa; margin-bottom: 1rem;"></i>
+                        <h4 style="color: white; font-weight: 700;">M-Pesa Payment</h4>
+                        <p style="color: #8892b0;">Enter your phone number to receive STK push</p>
+                    </div>
+
+                    <div class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label style="color: white; font-weight: 600; margin-bottom: 0.5rem; display: block;">Phone Number</label>
+                                <input type="tel" id="mpesaPhone" value="{{ tenant.phone }}" placeholder="254712345678"
+                                       style="width: 100%; padding: 1rem; font-size: 1.1rem; background: #16213e; border: 2px solid #2d3748; border-radius: 10px; color: white;">
+                            </div>
+                            
+                            <div style="display: grid; gap: 1rem;">
+                                <button onclick="payWithMpesa()" style="padding: 1rem; background: linear-gradient(45deg, #00d4aa, #00a8ff); border: none; border-radius: 10px; color: white; font-weight: 700; font-size: 1.1rem; cursor: pointer;">
+                                    <i class="fas fa-mobile-alt" style="margin-right: 0.5rem;"></i>Send Payment Request
+                                </button>
+                                <button onclick="hideForm()" style="padding: 1rem; background: transparent; border: 2px solid #2d3748; border-radius: 10px; color: #8892b0; font-weight: 600; cursor: pointer;">
+                                    Cancel
+                                </button>
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- Manual Form -->
+                <div id="manualForm" style="display: none; background: #1a1a2e; border-radius: 20px; padding: 2rem; margin-top: 2rem;">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <i class="fas fa-edit" style="font-size: 2.5rem; color: #667eea; margin-bottom: 1rem;"></i>
+                        <h4 style="color: white; font-weight: 700;">Manual Payment Entry</h4>
+                        <p style="color: #8892b0;">Record a payment you've already made</p>
+                    </div>
+
+                    <form method="POST" enctype="multipart/form-data" class="row justify-content-center">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label style="color: white; font-weight: 600; margin-bottom: 0.5rem; display: block;">M-Pesa Code (Optional)</label>
+                                <input type="text" name="mpesa_code" placeholder="QH123ABC45" maxlength="10"
+                                       style="width: 100%; padding: 1rem; font-size: 1.1rem; background: #16213e; border: 2px solid #2d3748; border-radius: 10px; color: white;">
+                            </div>
+
+                            <div class="mb-3">
+                                <label style="color: white; font-weight: 600; margin-bottom: 0.5rem; display: block;">Receipt (Optional)</label>
+                                <input type="file" name="receipt" accept="image/*,.pdf"
+                                       style="width: 100%; padding: 1rem; font-size: 1rem; background: #16213e; border: 2px solid #2d3748; border-radius: 10px; color: white;">
+                            </div>
+
+                            <input type="hidden" name="amount" id="manualAmount">
+
+                            <div style="display: grid; gap: 1rem;">
+                                <button type="submit" style="padding: 1rem; background: linear-gradient(45deg, #667eea, #764ba2); border: none; border-radius: 10px; color: white; font-weight: 700; font-size: 1.1rem; cursor: pointer;">
+                                    <i class="fas fa-save" style="margin-right: 0.5rem;"></i>Submit for Verification
+                                </button>
+                                <button type="button" onclick="hideForm()" style="padding: 1rem; background: transparent; border: 2px solid #2d3748; border-radius: 10px; color: #8892b0; font-weight: 600; cursor: pointer;">
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -166,48 +162,32 @@
 </div>
 
 <style>
-.backdrop-blur {
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+.method-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    border-color: white !important;
 }
 
-.payment-card {
-    border: none;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
+.method-card.selected {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+    border-color: #00d4aa !important;
 }
 
-.nav-pills .nav-link {
-    border-radius: 0.5rem;
-    font-weight: 700;
-    color: #000 !important;
-    background-color: #f8f9fa;
-    border: 2px solid #e9ecef;
+input:focus {
+    outline: none;
+    border-color: #00d4aa !important;
+    box-shadow: 0 0 0 3px rgba(0,212,170,0.1);
 }
 
-.nav-pills .nav-link.active {
-    background-color: #0d6efd !important;
-    color: #fff !important;
-    border-color: #0d6efd;
-}
-
-.nav-pills .nav-link:hover {
-    background-color: #e9ecef;
-    color: #000 !important;
-}
-
-.quick-amounts .btn {
-    font-size: 0.8rem;
-}
-
-.info-card {
-    border: 1px solid rgba(255,255,255,0.2);
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
 }
 
 @media (max-width: 768px) {
-    .quick-amounts .btn {
-        font-size: 0.75rem;
-        padding: 0.25rem 0.5rem;
+    .quick-amounts {
+        grid-template-columns: 1fr 1fr !important;
     }
 }
 </style>
@@ -217,67 +197,72 @@ function setAmount(amount) {
     document.getElementById('amount').value = amount.toFixed(2);
 }
 
-// Format phone number
-document.getElementById('mpesa_phone').addEventListener('input', function(e) {
-    let value = e.target.value.replace(/\D/g, '');
-    if (value.startsWith('0')) {
-        value = '254' + value.substring(1);
-    } else if (value.startsWith('7') || value.startsWith('1')) {
-        value = '254' + value;
+function selectMethod(method) {
+    const amount = document.getElementById('amount').value;
+    if (!amount || amount <= 0) {
+        alert('Please enter an amount first');
+        document.getElementById('amount').focus();
+        return;
     }
-    e.target.value = value;
-});
+
+    document.querySelectorAll('.method-card').forEach(card => card.classList.remove('selected'));
+    document.getElementById('mpesaForm').style.display = 'none';
+    document.getElementById('manualForm').style.display = 'none';
+
+    if (method === 'mpesa') {
+        document.getElementById('mpesaForm').style.display = 'block';
+        event.target.closest('.method-card').classList.add('selected');
+    } else {
+        document.getElementById('manualForm').style.display = 'block';
+        document.getElementById('manualAmount').value = amount;
+        event.target.closest('.method-card').classList.add('selected');
+    }
+
+    setTimeout(() => {
+        document.querySelector('[style*="display: block"]').scrollIntoView({behavior: 'smooth'});
+    }, 100);
+}
+
+function hideForm() {
+    document.getElementById('mpesaForm').style.display = 'none';
+    document.getElementById('manualForm').style.display = 'none';
+    document.querySelectorAll('.method-card').forEach(card => card.classList.remove('selected'));
+}
 
 function payWithMpesa() {
     const amount = document.getElementById('amount').value;
-    const phone = document.getElementById('mpesa_phone').value;
+    const phone = document.getElementById('mpesaPhone').value;
     
-    if (!amount || amount <= 0) {
-        alert('Please enter a valid amount');
-        return;
-    }
-    
-    if (!phone) {
-        alert('Please enter a phone number');
+    if (!amount || !phone) {
+        alert('Please fill all fields');
         return;
     }
     
     const btn = event.target;
     btn.disabled = true;
-    btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
     
     fetch('/tenant/pay', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            amount: parseFloat(amount),
-            phone: phone,
-            payment_type: 'mpesa'
-        })
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({amount: parseFloat(amount), phone: phone, payment_type: 'mpesa'})
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             alert('STK Push sent! Check your phone.');
-            checkPaymentStatus(data.checkout_request_id);
+            checkStatus(data.checkout_request_id);
         } else {
             alert('Failed: ' + data.message);
             btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>Pay with M-Pesa';
+            btn.innerHTML = '<i class="fas fa-mobile-alt"></i> Send Payment Request';
         }
-    })
-    .catch(error => {
-        alert('Error: ' + error.message);
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>Pay with M-Pesa';
     });
 }
 
-function checkPaymentStatus(checkoutRequestId) {
+function checkStatus(id) {
     const interval = setInterval(() => {
-        fetch(`/mpesa/status/${checkoutRequestId}`)
+        fetch(`/mpesa/status/${id}`)
         .then(response => response.json())
         .then(data => {
             if (data.success && data.status === 'COMPLETED') {
@@ -286,23 +271,20 @@ function checkPaymentStatus(checkoutRequestId) {
                 window.location.href = '/tenant/dashboard';
             } else if (data.success && data.status === 'FAILED') {
                 clearInterval(interval);
-                alert('Payment failed. Please try again.');
-                const btn = document.querySelector('button[onclick="payWithMpesa()"]');
-                btn.disabled = false;
-                btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>Pay with M-Pesa';
+                alert('Payment failed.');
+                location.reload();
             }
         });
     }, 3000);
     
-    setTimeout(() => {
-        clearInterval(interval);
-        const btn = document.querySelector('button[onclick="payWithMpesa()"]');
-        if (btn.disabled) {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-mobile-alt me-2"></i>Pay with M-Pesa';
-            alert('Payment timeout. Please check manually.');
-        }
-    }, 120000);
+    setTimeout(() => clearInterval(interval), 120000);
 }
+
+document.getElementById('mpesaPhone').addEventListener('input', function(e) {
+    let value = e.target.value.replace(/\D/g, '');
+    if (value.startsWith('0')) value = '254' + value.substring(1);
+    else if (value.startsWith('7') || value.startsWith('1')) value = '254' + value;
+    e.target.value = value;
+});
 </script>
 {% endblock %}

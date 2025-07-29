@@ -860,32 +860,11 @@ def tenant_payment():
             
             conn.execute(
                 'INSERT INTO payments (tenant_id, amount, payment_date, payment_mode, status, mpesa_code, receipt_file) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                (tenant_id, amount, date.today(), 'Manual Entry', 'Paid', mpesa_code, receipt_filename)
+                (tenant_id, amount, date.today(), 'Manual Entry', 'Pending Verification', mpesa_code, receipt_filename)
             )
             
-            # Auto-pay utility bills for manual payments too
-            remaining_amount = amount
-            pending_bills = conn.execute(
-                'SELECT * FROM utility_bills WHERE tenant_id = ? AND status = "Pending" ORDER BY due_date ASC',
-                (tenant_id,)
-            ).fetchall()
-            
-            paid_bills = []
-            for bill in pending_bills:
-                if remaining_amount >= bill['amount']:
-                    remaining_amount -= bill['amount']
-                    conn.execute(
-                        'UPDATE utility_bills SET status = "Paid" WHERE id = ?',
-                        (bill['id'],)
-                    )
-                    paid_bills.append(f"{bill['bill_type']} (KSh {bill['amount']:.2f})")
-            
             conn.commit()
-            
-            success_message = 'Payment recorded successfully!'
-            if paid_bills:
-                success_message += f' Utility bills paid: {", ".join(paid_bills)}'
-            flash(success_message)
+            flash('Payment submitted for verification')
     
     conn.close()
     return render_template('tenant_payment.html', tenant=tenant, balance=balance)
@@ -1217,6 +1196,87 @@ def admin_help_requests():
     
     dashboard_url = '/caretaker' if session.get('admin_role') == 'caretaker' else '/admin'
     return render_template('admin_help_requests.html', help_requests=help_requests, dashboard_url=dashboard_url)
+
+@app.route('/admin/payments', methods=['GET'])
+def view_payments():
+    if 'admin_id' not in session:
+        return redirect(url_for('unified_login', login_type='admin'))
+    
+    conn = get_db()
+    
+    # Get all payments with tenant information
+    payments = conn.execute('''
+        SELECT p.*, t.name as tenant_name, t.house_number, t.phone
+        FROM payments p
+        JOIN tenants t ON p.tenant_id = t.id
+        ORDER BY p.created_at DESC
+    ''').fetchall()
+    
+    # Calculate total payments
+    total_amount = sum(payment['amount'] for payment in payments)
+    
+    conn.close()
+    return render_template('admin_payments.html', payments=payments, total_amount=total_amount)
+
+@app.route('/admin/payment/approve/<int:payment_id>', methods=['POST'])
+def approve_payment(payment_id):
+    if 'admin_id' not in session:
+        return redirect(url_for('unified_login', login_type='admin'))
+    
+    conn = get_db()
+    payment = conn.execute('SELECT * FROM payments WHERE id = ?', (payment_id,)).fetchone()
+    
+    if payment:
+        # Update payment status to Paid
+        conn.execute('UPDATE payments SET status = "Paid" WHERE id = ?', (payment_id,))
+        
+        # Auto-pay utility bills
+        remaining_amount = payment['amount']
+        pending_bills = conn.execute(
+            'SELECT * FROM utility_bills WHERE tenant_id = ? AND status = "Pending" ORDER BY due_date ASC',
+            (payment['tenant_id'],)
+        ).fetchall()
+        
+        for bill in pending_bills:
+            if remaining_amount >= bill['amount']:
+                remaining_amount -= bill['amount']
+                conn.execute('UPDATE utility_bills SET status = "Paid" WHERE id = ?', (bill['id'],))
+        
+        # Notify tenant
+        conn.execute(
+            'INSERT INTO notifications (tenant_id, message, type) VALUES (?, ?, ?)',
+            (payment['tenant_id'], f"Payment of KSh {payment['amount']:.2f} has been approved!", 'success')
+        )
+        
+        conn.commit()
+        flash('Payment approved successfully')
+    
+    conn.close()
+    return redirect(url_for('view_payments'))
+
+@app.route('/admin/payment/decline/<int:payment_id>', methods=['POST'])
+def decline_payment(payment_id):
+    if 'admin_id' not in session:
+        return redirect(url_for('unified_login', login_type='admin'))
+    
+    conn = get_db()
+    payment = conn.execute('SELECT * FROM payments WHERE id = ?', (payment_id,)).fetchone()
+    
+    if payment:
+        # Update payment status to Declined
+        conn.execute('UPDATE payments SET status = "Declined" WHERE id = ?', (payment_id,))
+        
+        # Notify tenant
+        conn.execute(
+            'INSERT INTO notifications (tenant_id, message, type) VALUES (?, ?, ?)',
+            (payment['tenant_id'], f"Payment of KSh {payment['amount']:.2f} has been declined. Please contact admin.", 'danger')
+        )
+        
+        conn.commit()
+        flash('Payment declined')
+    
+    conn.close()
+    return redirect(url_for('view_payments'))
 
 @app.route('/admin/utility/add/<int:tenant_id>', methods=['GET', 'POST'])
 def add_utility_bill(tenant_id):
